@@ -5,7 +5,7 @@
 namespace Cosmo
 {
 template<typename Function, typename T>
-Function get_function_from_vtable_index(const T* object_base_address, int index)
+inline Function get_function_from_vtable_index(const T* object_base_address, int index)
 {
     auto* vtable = *reinterpret_cast<FlatPtr**>(const_cast<T*>(object_base_address));
 
