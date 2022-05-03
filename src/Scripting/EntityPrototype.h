@@ -17,5 +17,6 @@ public:
 private:
     JS_DECLARE_NATIVE_FUNCTION(model_getter);
     JS_DECLARE_NATIVE_FUNCTION(index_getter);
+    JS_DECLARE_NATIVE_FUNCTION(is_player);
 };
 }

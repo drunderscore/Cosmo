@@ -16,6 +16,7 @@ void EntityPrototype::initialize(JS::GlobalObject& global_object)
     Object::initialize(global_object);
     define_native_accessor("model", model_getter, {}, 0);
     define_native_accessor("index", index_getter, {}, 0);
+    define_native_accessor("isPlayer", is_player, {}, 0);
 }
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::model_getter)
@@ -30,5 +31,12 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::index_getter)
     auto* this_entity = TRY(typed_this_object(global_object));
 
     return this_entity->entity()->GetRefEHandle().GetEntryIndex();
+}
+
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::is_player)
+{
+    auto* this_entity = TRY(typed_this_object(global_object));
+
+    return this_entity->entity()->IsPlayer();
 }
 }

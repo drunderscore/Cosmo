@@ -24,21 +24,25 @@ JS::ThrowCompletionOr<RecipientFilter> to_recipient_filter(JS::VM& vm, JS::Globa
         {
             auto recipient_value = TRY(value_array.get(it.index()));
 
-            // FIXME: This should be is<Player> when we have that type!
+            CBaseEntity* entity{};
+
             if (recipient_value.is_object() && is<Entity>(recipient_value.as_object()))
-            {
-                filter.add_recipient(
-                    static_cast<Entity&>(recipient_value.as_object()).entity()->GetRefEHandle().GetEntryIndex());
-            }
+                entity = static_cast<Entity&>(recipient_value.as_object()).entity();
             else if (recipient_value.is_number())
-            {
-                filter.add_recipient(recipient_value.as_i32());
-            }
-            else
-            {
+                // TODO: verify it's okay to call PEntityOfEntIndex on null edict? what about range checking entity
+                //       index, must we do that too?
+                entity = Plugin::the().server_game_ents().EdictToBaseEntity(
+                    Plugin::the().engine_server().PEntityOfEntIndex(recipient_value.as_i32()));
+
+            if (!entity)
                 return vm.throw_completion<JS::TypeError>(global_object,
-                                                          String::formatted("{} is not a number", recipient_value));
-            }
+                                                          String::formatted("{} is not an entity", recipient_value));
+
+            if (!entity->IsPlayer())
+                return vm.throw_completion<JS::TypeError>(
+                    global_object, String::formatted("{} is not a player entity", recipient_value));
+
+            filter.add_recipient(entity->GetRefEHandle().GetEntryIndex());
         }
 
         return filter;
