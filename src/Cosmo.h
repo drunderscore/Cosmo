@@ -61,6 +61,7 @@ public:
     IVEngineServer& engine_server() const { return *m_engine_server; }
     IServerTools& server_tools() const { return *m_server_tools; }
     IServerGameEnts& server_game_ents() const { return *m_server_game_ents; }
+    IServerGameClients& server_game_clients() const { return *m_server_game_clients; }
 
     static Plugin& the() { return s_the; }
     static Plugin s_the;
@@ -82,11 +83,19 @@ private:
 
     static SpewRetval_t ansi_true_color_spew_output(SpewType_t spewType, const tchar* pMsg);
 
+    bool on_client_connect(edict_t*, const char* name, const char* address, char* reject_message,
+                           int reject_message_max_length);
+
+    void on_client_active(edict_t*, bool load_game);
+
+    void on_client_disconnect(edict_t*);
+
     ICvar* m_cvar{};
     IServerGameDLL* m_server_game_dll{};
     IVEngineServer* m_engine_server{};
     IServerTools* m_server_tools{};
     IServerGameEnts* m_server_game_ents{};
+    IServerGameClients* m_server_game_clients;
 
     NonnullRefPtr<JS::VM> m_vm;
     NonnullOwnPtr<JS::Interpreter> m_interpreter;

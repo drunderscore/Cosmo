@@ -4,12 +4,17 @@
 #include "RemoveSourceSpecifics.h"
 
 #include "Scripting/Command.h"
+#include "Scripting/Entity.h"
+#include "Scripting/EventNames.h"
 #include "Scripting/Game.h"
-#include <AK/Format.h>
 #include <LibCore/Stream.h>
 
 namespace Cosmo
 {
+SH_DECL_HOOK5(IServerGameClients, ClientConnect, SH_NOATTRIB, 0, bool, edict_t*, const char*, const char*, char*, int);
+SH_DECL_HOOK2_void(IServerGameClients, ClientActive, SH_NOATTRIB, 0, edict_t*, bool);
+SH_DECL_HOOK1_void(IServerGameClients, ClientDisconnect, SH_NOATTRIB, 0, edict_t*);
+
 Plugin Plugin::s_the;
 SpewOutputFunc_t Plugin::s_original_spew_output_func{};
 // If a spew is using a default color (it's color is 255, 255, 255), then we use this color instead, based on it's type.
@@ -77,6 +82,13 @@ bool Plugin::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool l
     GET_V_IFACE_CURRENT(GetEngineFactory, m_engine_server, IVEngineServer, INTERFACEVERSION_VENGINESERVER);
     GET_V_IFACE_CURRENT(GetServerFactory, m_server_tools, IServerTools, VSERVERTOOLS_INTERFACE_VERSION);
     GET_V_IFACE_CURRENT(GetServerFactory, m_server_game_ents, IServerGameEnts, INTERFACEVERSION_SERVERGAMEENTS);
+    GET_V_IFACE_ANY(GetServerFactory, m_server_game_clients, IServerGameClients, INTERFACEVERSION_SERVERGAMECLIENTS);
+
+    SH_ADD_HOOK_MEMFUNC(IServerGameClients, ClientConnect, m_server_game_clients, this, &Plugin::on_client_connect,
+                        false);
+    SH_ADD_HOOK_MEMFUNC(IServerGameClients, ClientActive, m_server_game_clients, this, &Plugin::on_client_active, true);
+    SH_ADD_HOOK_MEMFUNC(IServerGameClients, ClientDisconnect, m_server_game_clients, this,
+                        &Plugin::on_client_disconnect, false);
 
 #if SOURCE_ENGINE >= SE_ORANGEBOX
     g_pCVar = m_cvar;
@@ -118,6 +130,13 @@ bool Plugin::Unload(char* error, size_t maxlen)
         g_SMAPI->UnregisterConCommandBase(g_PLAPI, kv.value.command);
 
     command_object.commands().clear();
+
+    SH_REMOVE_HOOK_MEMFUNC(IServerGameClients, ClientConnect, m_server_game_clients, this, &Plugin::on_client_connect,
+                           false);
+    SH_REMOVE_HOOK_MEMFUNC(IServerGameClients, ClientActive, m_server_game_clients, this, &Plugin::on_client_active,
+                           true);
+    SH_REMOVE_HOOK_MEMFUNC(IServerGameClients, ClientDisconnect, m_server_game_clients, this,
+                           &Plugin::on_client_disconnect, false);
 
     return true;
 }
@@ -186,6 +205,33 @@ SpewRetval_t Plugin::ansi_true_color_spew_output(SpewType_t spew_type, const tch
     }
 
     return s_original_spew_output_func(spew_type, corrected_message_builder.to_string().characters());
+}
+
+bool Plugin::on_client_connect(edict_t* player_edict, const char* name, const char* address, char* reject_message,
+                               int reject_message_max_length)
+{
+    // FIXME: The edict has no CBaseEntity* yet, but eventually it will. Do we care?
+    // FIXME: Events have no way of giving information back to the dispatcher, so how can we reject this connection,
+    //        with a rejection message?
+
+    global_object().game_object().dispatch_event(Scripting::EventNames::player_connect,
+                                                 JS::js_string(vm().heap(), name), JS::js_string(vm().heap(), address));
+
+    return true;
+}
+
+void Plugin::on_client_active(edict_t* player_edict, bool)
+{
+    global_object().game_object().dispatch_event(
+        Scripting::EventNames::player_active,
+        Scripting::Entity::create(global_object(), m_server_game_ents->EdictToBaseEntity(player_edict)));
+}
+
+void Plugin::on_client_disconnect(edict_t* player_edict)
+{
+    global_object().game_object().dispatch_event(
+        Scripting::EventNames::player_disconnect,
+        Scripting::Entity::create(global_object(), m_server_game_ents->EdictToBaseEntity(player_edict)));
 }
 
 CON_COMMAND(cosmo_run, "Run a script")

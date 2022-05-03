@@ -28,6 +28,7 @@ void Game::initialize(JS::GlobalObject& global_object)
     define_direct_property("Command",
                            m_command_object = heap().allocate<Command>(cosmo_global_object, cosmo_global_object), 0);
 
+    define_native_function("on", on, 2, 0);
     define_native_function("sayText2", say_text_2, 8, 0);
 }
 
@@ -62,6 +63,24 @@ JS_DEFINE_NATIVE_FUNCTION(Game::mod_description_getter)
         return JS::js_undefined();
 
     return JS::js_string(vm.heap(), game_description);
+}
+
+JS_DEFINE_NATIVE_FUNCTION(Game::on)
+{
+    auto event_name = vm.argument(0);
+    if (!event_name.is_string())
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAString, event_name);
+
+    auto event_callback = vm.argument(1);
+    if (!event_callback.is_function())
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAFunction, event_callback);
+
+    auto* this_value = verify_cast<Game>(TRY(vm.this_value(global_object).to_object(global_object)));
+    this_value->m_event_handlers
+        .ensure(event_name.as_string().string(), [&vm]() { return JS::MarkedVector<JS::FunctionObject*>(vm.heap()); })
+        .append(&event_callback.as_function());
+
+    return JS::js_undefined();
 }
 
 JS_DEFINE_NATIVE_FUNCTION(Game::say_text_2)
