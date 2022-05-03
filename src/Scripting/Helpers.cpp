@@ -29,8 +29,6 @@ JS::ThrowCompletionOr<RecipientFilter> to_recipient_filter(JS::VM& vm, JS::Globa
             if (recipient_value.is_object() && is<Entity>(recipient_value.as_object()))
                 entity = static_cast<Entity&>(recipient_value.as_object()).entity();
             else if (recipient_value.is_number())
-                // TODO: verify it's okay to call PEntityOfEntIndex on null edict? what about range checking entity
-                //       index, must we do that too?
                 entity = Plugin::the().server_game_ents().EdictToBaseEntity(
                     Plugin::the().engine_server().PEntityOfEntIndex(recipient_value.as_i32()));
 
