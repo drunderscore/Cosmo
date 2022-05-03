@@ -1,4 +1,5 @@
 #include "Cosmo.h"
+#include "RecipientFilter.h"
 
 #include "RemoveSourceSpecifics.h"
 
@@ -77,7 +78,6 @@ bool Plugin::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool l
     GET_V_IFACE_CURRENT(GetServerFactory, m_server_tools, IServerTools, VSERVERTOOLS_INTERFACE_VERSION);
     GET_V_IFACE_CURRENT(GetServerFactory, m_server_game_ents, IServerGameEnts, INTERFACEVERSION_SERVERGAMEENTS);
 
-    Msg("Loaded Cosmo\n");
 
 #if SOURCE_ENGINE >= SE_ORANGEBOX
     g_pCVar = m_cvar;
@@ -101,6 +101,7 @@ bool Plugin::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool l
     }
 #endif
 
+    Msg("Loaded Cosmo\n");
     return true;
 }
 
@@ -120,6 +121,27 @@ bool Plugin::Unload(char* error, size_t maxlen)
     command_object.commands().clear();
 
     return true;
+}
+
+void Plugin::say_text_2(const RecipientFilter& filter, int source_entity_index, bool should_print_to_console,
+                        const String& message, Optional<const String&> param_1, Optional<const String&> param_2,
+                        Optional<const String&> param_3, Optional<const String&> param_4)
+{
+    // I'll accept the const_cast here -- it makes the end-user API nicer, by allowing a reference to a temporary,
+    // so we can just use the std::initializer_list constructor of RecipientFilter implicitly
+    // It's only really used in MessageEnd anyway (which calls into BroadcastMessage)
+    auto user_message_buffer =
+        m_engine_server->UserMessageBegin(&const_cast<RecipientFilter&>(filter), g_SMAPI->FindUserMessage("SayText2"));
+
+    user_message_buffer->WriteByte(source_entity_index);
+    user_message_buffer->WriteByte(should_print_to_console);
+    user_message_buffer->WriteString(message.characters());
+    user_message_buffer->WriteString(param_1.value_or("").characters());
+    user_message_buffer->WriteString(param_2.value_or("").characters());
+    user_message_buffer->WriteString(param_3.value_or("").characters());
+    user_message_buffer->WriteString(param_4.value_or("").characters());
+
+    m_engine_server->MessageEnd();
 }
 
 SpewRetval_t Plugin::ansi_true_color_spew_output(SpewType_t spew_type, const tchar* msg)

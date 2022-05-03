@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Forward.h"
 #include <ISmmPlugin.h>
 #include <eiface.h>
 #include <toolframework/itoolentity.h>
@@ -49,6 +50,11 @@ public:
     JS::Interpreter& interpreter() { return *m_interpreter; }
 
     Scripting::GlobalObject& global_object() { return m_global_object; }
+
+    // We want String& here, so we can ensure they are null-terminated
+    void say_text_2(const RecipientFilter&, int source_entity_index, bool should_print_to_console,
+                    const String& message, Optional<const String&> param_1 = {}, Optional<const String&> param_2 = {},
+                    Optional<const String&> param_3 = {}, Optional<const String&> param_4 = {});
 
     ICvar& cvar() const { return *m_cvar; }
     IServerGameDLL& server_game_dll() const { return *m_server_game_dll; }
