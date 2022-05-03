@@ -27,8 +27,9 @@ jobs:
     # Shamelessly stolen from Serenity
     - name: Install Prerequisites
       run: |
+        sudo dpkg --add-architecture i386
         sudo apt -yq update
-        sudo apt -yq install g++-11 cmake ninja-build g++-11-multilib
+        sudo apt -yq install g++-11 cmake ninja-build g++-11-multilib libcrypt1:i386
 
     - name: Use GCC 11 by default
       run: sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100 --slave /usr/bin/g++ g++ /usr/bin/g++-11
