@@ -1,0 +1,7 @@
+[submodule "metamod-source"]
+	path = metamod-source
+	url = https://github.com/Alliedmodders/metamod-source
+[submodule "hl2sdk"]
+	path = hl2sdk
+	url = https://github.com/drunderscore/hl2sdk
+	branch = tf2
