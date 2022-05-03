@@ -5,6 +5,7 @@
 #include "Command.h"
 #include "Game.h"
 #include "GlobalObject.h"
+#include "Helpers.h"
 #include "Server.h"
 
 namespace Cosmo::Scripting
@@ -26,6 +27,8 @@ void Game::initialize(JS::GlobalObject& global_object)
     define_direct_property("Server", heap().allocate<Server>(cosmo_global_object, cosmo_global_object), 0);
     define_direct_property("Command",
                            m_command_object = heap().allocate<Command>(cosmo_global_object, cosmo_global_object), 0);
+
+    define_native_function("sayText2", say_text_2, 8, 0);
 }
 
 JS_DEFINE_NATIVE_FUNCTION(Game::map_getter) { return JS::js_string(vm, g_SMAPI->GetCGlobals()->mapname.ToCStr()); }
@@ -59,5 +62,38 @@ JS_DEFINE_NATIVE_FUNCTION(Game::mod_description_getter)
         return JS::js_undefined();
 
     return JS::js_string(vm.heap(), game_description);
+}
+
+JS_DEFINE_NATIVE_FUNCTION(Game::say_text_2)
+{
+    auto message = vm.argument(0);
+    if (!message.is_string())
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAString, message);
+
+    auto filter_argument = vm.argument(1);
+    auto filter = filter_argument.is_nullish() ? RecipientFilter::all()
+                                               : TRY(to_recipient_filter(vm, global_object, filter_argument));
+
+    auto get_say_text_parameter = [&vm](int argument_index) -> Optional<const String&> {
+        auto argument = vm.argument(argument_index);
+        if (argument.is_string())
+            return argument.as_string().string();
+
+        return {};
+    };
+
+    auto param_1 = get_say_text_parameter(2);
+    auto param_2 = get_say_text_parameter(3);
+    auto param_3 = get_say_text_parameter(4);
+    auto param_4 = get_say_text_parameter(5);
+
+    auto source_entity_index = vm.argument(6);
+    auto should_print_to_console = vm.argument(7);
+
+    Plugin::the().say_text_2(filter, source_entity_index.is_number() ? source_entity_index.as_i32() : 0,
+                             should_print_to_console.is_boolean() ? should_print_to_console.as_bool() : true,
+                             message.as_string().string(), param_1, param_2, param_3, param_4);
+
+    return JS::js_undefined();
 }
 }

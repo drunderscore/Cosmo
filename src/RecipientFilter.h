@@ -30,6 +30,18 @@ public:
 
     void remove_recipient_index(int index) { m_recipients.remove(index); }
 
+    static RecipientFilter all()
+    {
+        RecipientFilter filter;
+        for (auto i = 1; i <= g_SMAPI->GetCGlobals()->maxClients; i++)
+        {
+            if (auto edict = Plugin::the().engine_server().PEntityOfEntIndex(i);
+                edict && Plugin::the().server_game_ents().EdictToBaseEntity(edict))
+                filter.add_recipient(i);
+        }
+        return filter;
+    }
+
 private:
     AK::Vector<int> m_recipients;
     // Let's just always be reliable by default

@@ -31,10 +31,11 @@ add_library(Cosmo SHARED
         src/Cosmo.cpp
         src/Dump.cpp
         src/Scripting/Command.cpp
-        src/Scripting/GlobalObject.cpp
         src/Scripting/Entity.cpp
         src/Scripting/EntityPrototype.cpp
         src/Scripting/Game.cpp
+        src/Scripting/GlobalObject.cpp
+        src/Scripting/Helpers.cpp
         src/Scripting/Server.cpp
         )
 
