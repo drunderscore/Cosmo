@@ -78,7 +78,6 @@ bool Plugin::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool l
     GET_V_IFACE_CURRENT(GetServerFactory, m_server_tools, IServerTools, VSERVERTOOLS_INTERFACE_VERSION);
     GET_V_IFACE_CURRENT(GetServerFactory, m_server_game_ents, IServerGameEnts, INTERFACEVERSION_SERVERGAMEENTS);
 
-
 #if SOURCE_ENGINE >= SE_ORANGEBOX
     g_pCVar = m_cvar;
     ConVar_Register(0, &s_base_accessor);
