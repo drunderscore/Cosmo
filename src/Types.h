@@ -11,5 +11,9 @@
 class CBaseEntity : public IServerEntity
 {
 public:
-    inline bool IsPlayer() const { return Cosmo::get_function_from_vtable_index<bool (*)()>(this, 81)(); }
+    inline bool IsPlayer() const
+    {
+        return Cosmo::get_function_from_vtable_index<__attribute__((fastcall)) bool (*)(const CBaseEntity*)>(this,
+                                                                                                             81)(this);
+    }
 };
