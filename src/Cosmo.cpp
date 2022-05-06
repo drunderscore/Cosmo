@@ -40,11 +40,9 @@ public:
 JS::ThrowCompletionOr<JS::Value> Plugin::Console::printer(JS::Console::LogLevel log_level,
                                                           PrinterArguments printer_arguments)
 {
-    if (printer_arguments.has<AK::Vector<JS::Value>>())
+    if (auto* values = printer_arguments.get_pointer<AK::Vector<JS::Value>>())
     {
-        // get_pointer to avoid has VERIFY check
-        auto& values = *printer_arguments.get_pointer<AK::Vector<JS::Value>>();
-        auto output = String::join(" ", values);
+        auto output = String::join(" ", *values);
 
         switch (log_level)
         {
