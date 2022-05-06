@@ -40,7 +40,7 @@ public:
 JS::ThrowCompletionOr<JS::Value> Plugin::Console::printer(JS::Console::LogLevel log_level,
                                                           PrinterArguments printer_arguments)
 {
-    if (auto* values = printer_arguments.get_pointer<AK::Vector<JS::Value>>())
+    if (auto* values = printer_arguments.get_pointer<JS::MarkedVector<JS::Value>>())
     {
         auto output = String::join(" ", *values);
 
