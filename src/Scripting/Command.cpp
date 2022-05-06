@@ -84,6 +84,12 @@ void Command::on_script_concommand_execute(const CCommand& args)
 
 JS_DEFINE_NATIVE_FUNCTION(Command::register_)
 {
+    auto this_value = vm.this_value(global_object);
+    if (!this_value.is_object() || !is<Command>(this_value.as_object()))
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAnObjectOfType, "Command");
+
+    auto& command_object = static_cast<Command&>(this_value.as_object());
+
     auto command_name = vm.argument(0);
     if (!command_name.is_string())
         return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAString, command_name);
@@ -92,9 +98,7 @@ JS_DEFINE_NATIVE_FUNCTION(Command::register_)
     if (!callback_function.is_function())
         return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAFunction, callback_function);
 
-    auto* this_value = verify_cast<Command>(TRY(vm.this_value(global_object).to_object(global_object)));
-
-    this_value->m_commands.set(
+    command_object.m_commands.set(
         command_name.as_string().string(),
         {make<ConCommand>(command_name.as_string().string().characters(), on_script_concommand_execute),
          &callback_function.as_function()});
