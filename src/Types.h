@@ -16,4 +16,10 @@ public:
         return Cosmo::get_function_from_vtable_index<__attribute__((cdecl)) bool (*)(const CBaseEntity*)>(this,
                                                                                                           81)(this);
     }
+
+    inline void SetModel(const String& model) const
+    {
+        Cosmo::get_function_from_vtable_index<__attribute__((cdecl)) void (*)(const CBaseEntity*, const char*)>(
+            this, 25)(this, model.characters());
+    }
 };
