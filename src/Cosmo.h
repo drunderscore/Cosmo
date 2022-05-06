@@ -95,7 +95,7 @@ private:
     IVEngineServer* m_engine_server{};
     IServerTools* m_server_tools{};
     IServerGameEnts* m_server_game_ents{};
-    IServerGameClients* m_server_game_clients;
+    IServerGameClients* m_server_game_clients{};
 
     NonnullRefPtr<JS::VM> m_vm;
     NonnullOwnPtr<JS::Interpreter> m_interpreter;
