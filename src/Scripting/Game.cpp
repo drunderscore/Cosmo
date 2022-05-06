@@ -67,6 +67,12 @@ JS_DEFINE_NATIVE_FUNCTION(Game::mod_description_getter)
 
 JS_DEFINE_NATIVE_FUNCTION(Game::on)
 {
+    auto this_value = vm.this_value(global_object);
+    if (!this_value.is_object() || !is<Game>(this_value.as_object()))
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAnObjectOfType, "Game");
+
+    auto& game_object = static_cast<Game&>(this_value.as_object());
+
     auto event_name = vm.argument(0);
     if (!event_name.is_string())
         return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAString, event_name);
@@ -75,8 +81,7 @@ JS_DEFINE_NATIVE_FUNCTION(Game::on)
     if (!event_callback.is_function())
         return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAFunction, event_callback);
 
-    auto* this_value = verify_cast<Game>(TRY(vm.this_value(global_object).to_object(global_object)));
-    this_value->m_event_handlers
+    game_object.m_event_handlers
         .ensure(event_name.as_string().string(), [&vm]() { return JS::MarkedVector<JS::FunctionObject*>(vm.heap()); })
         .append(&event_callback.as_function());
 
