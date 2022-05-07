@@ -4,6 +4,7 @@
 #include "../RemoveSourceSpecifics.h"
 
 #include "EntityPrototype.h"
+#include "Helpers.h"
 
 namespace Cosmo::Scripting
 {
@@ -18,6 +19,7 @@ void EntityPrototype::initialize(JS::GlobalObject& global_object)
     define_native_accessor("index", index_getter, {}, 0);
     define_native_accessor("isPlayer", is_player, {}, 0);
     define_native_accessor("classname", classname_getter, {}, 0);
+    define_native_accessor("position", position_getter, position_setter, 0);
 }
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::model_getter)
@@ -62,5 +64,23 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::classname_getter)
     auto* this_entity = TRY(typed_this_object(global_object));
 
     return JS::js_string(vm, this_entity->entity()->GetClassname());
+}
+
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::position_getter)
+{
+    auto* this_entity = TRY(typed_this_object(global_object));
+
+    return from_source_vector(global_object, this_entity->entity()->GetAbsOrigin());
+}
+
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::position_setter)
+{
+    auto* this_entity = TRY(typed_this_object(global_object));
+
+    auto vector = TRY(to_source_vector(vm, global_object, vm.argument(0)));
+
+    this_entity->entity()->Teleport(&vector, nullptr, nullptr);
+
+    return JS::js_undefined();
 }
 }

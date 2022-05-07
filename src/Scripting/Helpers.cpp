@@ -49,4 +49,50 @@ JS::ThrowCompletionOr<RecipientFilter> to_recipient_filter(JS::VM& vm, JS::Globa
     return vm.throw_completion<JS::TypeError>(global_object,
                                               String::formatted("Cannot create a recipient filter from {}", value));
 }
+
+JS::ThrowCompletionOr<SourceVector> to_source_vector(JS::VM& vm, JS::GlobalObject& global_object, JS::Value value,
+                                                     int number_of_elements)
+{
+    if (!TRY(value.is_array(global_object)))
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::IsNotAn, value, "Array");
+
+    SourceVector vector{};
+    int number_of_elements_indexed = 0;
+    auto& array = value.as_array();
+    for (auto it = array.indexed_properties().begin(false); it != array.indexed_properties().end(); ++it)
+    {
+        if (number_of_elements_indexed == number_of_elements)
+            return vm.throw_completion<JS::Error>(global_object, "Too many elements for vector");
+
+        auto element_value = TRY(array.get(it.index()));
+        if (!element_value.is_number())
+            return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::IsNotA, element_value, "number");
+
+        vector[number_of_elements_indexed] = static_cast<float>(element_value.as_double());
+        number_of_elements_indexed++;
+    }
+
+    if (number_of_elements_indexed != number_of_elements)
+        return vm.throw_completion<JS::Error>(global_object, "Not enough elements for vector");
+
+    return vector;
+}
+
+JS::ThrowCompletionOr<QAngle> to_qangle(JS::VM& vm, JS::GlobalObject& global_object, JS::Value value,
+                                        int number_of_elements)
+{
+    auto vector = TRY(to_source_vector(vm, global_object, value, number_of_elements));
+
+    QAngle angle;
+    for (auto i = 0; i < number_of_elements; i++)
+        angle[i] = vector[i];
+
+    return angle;
+}
+
+JS::Array* from_source_vector(JS::GlobalObject& global_object, SourceVector& vector)
+{
+    return JS::Array::create_from<vec_t>(global_object, {reinterpret_cast<vec_t*>(&vector), 3},
+                                         [](const auto& value) { return JS::Value(value); });
+}
 }
