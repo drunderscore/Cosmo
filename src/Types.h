@@ -22,4 +22,10 @@ public:
         Cosmo::get_function_from_vtable_index<__attribute__((cdecl)) void (*)(const CBaseEntity*, const char*)>(
             this, 25)(this, model.characters());
     }
+
+    inline datamap_t* GetDataDescMap() const
+    {
+        return Cosmo::get_function_from_vtable_index<__attribute__((cdecl)) datamap_t* (*)(const CBaseEntity*)>(
+            this, 12)(this);
+    }
 };

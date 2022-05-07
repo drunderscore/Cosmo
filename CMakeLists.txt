@@ -30,6 +30,7 @@ string(SUBSTRING ${GIT_SHA1} 0 7 GIT_SHA1_SHORT)
 add_library(Cosmo SHARED
         src/Cosmo.cpp
         src/Dump.cpp
+        src/Helpers.cpp
         src/Scripting/Command.cpp
         src/Scripting/Entity.cpp
         src/Scripting/EntityPrototype.cpp
