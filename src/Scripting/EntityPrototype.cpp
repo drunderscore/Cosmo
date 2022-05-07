@@ -20,6 +20,8 @@ void EntityPrototype::initialize(JS::GlobalObject& global_object)
     define_native_accessor("isPlayer", is_player, {}, 0);
     define_native_accessor("classname", classname_getter, {}, 0);
     define_native_accessor("position", position_getter, position_setter, 0);
+
+    define_native_function("teleport", teleport, 3, 0);
 }
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::model_getter)
@@ -80,6 +82,28 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::position_setter)
     auto vector = TRY(to_source_vector(vm, global_object, vm.argument(0)));
 
     this_entity->entity()->Teleport(&vector, nullptr, nullptr);
+
+    return JS::js_undefined();
+}
+
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::teleport)
+{
+    auto* this_entity = TRY(typed_this_object(global_object));
+
+    Optional<SourceVector> new_position;
+    Optional<QAngle> new_angles;
+    Optional<SourceVector> new_velocity;
+
+    if (auto new_position_argument = vm.argument(0); !new_position_argument.is_nullish())
+        new_position = TRY(to_source_vector(vm, global_object, new_position_argument));
+
+    if (auto new_angles_argument = vm.argument(1); !new_angles_argument.is_nullish())
+        new_angles = TRY(to_qangle(vm, global_object, new_angles_argument));
+
+    if (auto new_velocity_argument = vm.argument(2); !new_velocity_argument.is_nullish())
+        new_velocity = TRY(to_source_vector(vm, global_object, new_velocity_argument));
+
+    this_entity->entity()->Teleport(new_position, new_angles, new_velocity);
 
     return JS::js_undefined();
 }

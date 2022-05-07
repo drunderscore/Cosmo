@@ -23,5 +23,7 @@ private:
     JS_DECLARE_NATIVE_FUNCTION(position_setter);
 
     JS_DECLARE_NATIVE_FUNCTION(is_player);
+
+    JS_DECLARE_NATIVE_FUNCTION(teleport);
 };
 }
