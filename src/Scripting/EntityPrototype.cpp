@@ -24,6 +24,7 @@ void EntityPrototype::initialize(JS::GlobalObject& global_object)
 
     define_native_function("dispatchSpawn", dispatch_spawn, 0, 0);
     define_native_function("teleport", teleport, 3, 0);
+    define_native_function("remove", remove, 0, 0);
 }
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::model_getter)
@@ -135,6 +136,15 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::team_setter)
         return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::IsNotA, team, "number");
 
     this_entity->entity()->ChangeTeam(team.as_i32());
+
+    return JS::js_undefined();
+}
+
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::remove)
+{
+    auto* this_entity = TRY(typed_this_object(global_object));
+
+    Plugin::the().server_tools().RemoveEntity(this_entity->entity());
 
     return JS::js_undefined();
 }

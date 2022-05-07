@@ -28,5 +28,6 @@ private:
 
     JS_DECLARE_NATIVE_FUNCTION(dispatch_spawn);
     JS_DECLARE_NATIVE_FUNCTION(teleport);
+    JS_DECLARE_NATIVE_FUNCTION(remove);
 };
 }
