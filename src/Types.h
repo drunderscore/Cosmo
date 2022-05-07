@@ -81,4 +81,16 @@ public:
     {
         return reinterpret_cast<T*>(reinterpret_cast<FlatPtr>(this) + type_description.fieldOffset[TD_OFFSET_NORMAL]);
     }
+
+    inline void ChangeTeam(int team)
+    {
+        Cosmo::get_function_from_vtable_index<__attribute__((cdecl)) void (*)(const CBaseEntity*, int)>(this, 95)(this,
+                                                                                                                  team);
+    }
+
+    inline int GetTeamNumber()
+    {
+        return *get_value_by_type_description<int>(
+            Cosmo::find_type_description_from_datamap_by_name_including_base(*GetDataDescMap(), "m_iTeamNum").value());
+    }
 };

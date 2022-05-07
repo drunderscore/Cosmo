@@ -21,6 +21,8 @@ private:
     JS_DECLARE_NATIVE_FUNCTION(index_getter);
     JS_DECLARE_NATIVE_FUNCTION(position_getter);
     JS_DECLARE_NATIVE_FUNCTION(position_setter);
+    JS_DECLARE_NATIVE_FUNCTION(team_getter);
+    JS_DECLARE_NATIVE_FUNCTION(team_setter);
 
     JS_DECLARE_NATIVE_FUNCTION(is_player);
 

@@ -20,6 +20,7 @@ void EntityPrototype::initialize(JS::GlobalObject& global_object)
     define_native_accessor("isPlayer", is_player, {}, 0);
     define_native_accessor("classname", classname_getter, {}, 0);
     define_native_accessor("position", position_getter, position_setter, 0);
+    define_native_accessor("team", team_getter, team_setter, 0);
 
     define_native_function("dispatchSpawn", dispatch_spawn, 0, 0);
     define_native_function("teleport", teleport, 3, 0);
@@ -114,6 +115,26 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::teleport)
         new_velocity = TRY(to_source_vector(vm, global_object, new_velocity_argument));
 
     this_entity->entity()->Teleport(new_position, new_angles, new_velocity);
+
+    return JS::js_undefined();
+}
+
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::team_getter)
+{
+    auto* this_entity = TRY(typed_this_object(global_object));
+
+    return this_entity->entity()->GetTeamNumber();
+}
+
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::team_setter)
+{
+    auto* this_entity = TRY(typed_this_object(global_object));
+
+    auto team = vm.argument(0);
+    if (!team.is_number())
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::IsNotA, team, "number");
+
+    this_entity->entity()->ChangeTeam(team.as_i32());
 
     return JS::js_undefined();
 }
