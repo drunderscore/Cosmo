@@ -24,6 +24,7 @@ private:
 
     JS_DECLARE_NATIVE_FUNCTION(is_player);
 
+    JS_DECLARE_NATIVE_FUNCTION(dispatch_spawn);
     JS_DECLARE_NATIVE_FUNCTION(teleport);
 };
 }

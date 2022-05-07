@@ -21,6 +21,7 @@ void EntityPrototype::initialize(JS::GlobalObject& global_object)
     define_native_accessor("classname", classname_getter, {}, 0);
     define_native_accessor("position", position_getter, position_setter, 0);
 
+    define_native_function("dispatchSpawn", dispatch_spawn, 0, 0);
     define_native_function("teleport", teleport, 3, 0);
 }
 
@@ -66,6 +67,15 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::classname_getter)
     auto* this_entity = TRY(typed_this_object(global_object));
 
     return JS::js_string(vm, this_entity->entity()->GetClassname());
+}
+
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::dispatch_spawn)
+{
+    auto* this_entity = TRY(typed_this_object(global_object));
+
+    Plugin::the().server_tools().DispatchSpawn(this_entity->entity());
+
+    return JS::js_undefined();
 }
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::position_getter)
