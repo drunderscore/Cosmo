@@ -28,4 +28,18 @@ public:
         return Cosmo::get_function_from_vtable_index<__attribute__((cdecl)) datamap_t* (*)(const CBaseEntity*)>(
             this, 12)(this);
     }
+
+    inline const char* GetClassname()
+    {
+        return get_value_by_type_description<string_t>(
+                   Cosmo::find_type_description_from_datamap_by_name_including_base(*GetDataDescMap(), "m_iClassname")
+                       .value())
+            ->ToCStr();
+    }
+
+    template<typename T>
+    inline T* get_value_by_type_description(typedescription_t& type_description)
+    {
+        return reinterpret_cast<T*>(reinterpret_cast<FlatPtr>(this) + type_description.fieldOffset[TD_OFFSET_NORMAL]);
+    }
 };
