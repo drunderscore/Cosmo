@@ -3,6 +3,7 @@
 #include "../RemoveSourceSpecifics.h"
 
 #include "../Types.h"
+#include "../Types/BaseEntity.h"
 #include "Entity.h"
 #include "Helpers.h"
 #include <LibJS/Runtime/Array.h>

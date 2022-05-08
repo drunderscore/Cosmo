@@ -1,9 +1,8 @@
 #pragma once
 
-class CBaseEntity;
-
 #include "../RemoveSourceSpecifics.h"
 
+#include "../Forward.h"
 #include "Forward.h"
 #include <LibJS/Runtime/Object.h>
 

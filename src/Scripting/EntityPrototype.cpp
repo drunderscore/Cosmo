@@ -1,5 +1,6 @@
 #include "../Cosmo.h"
 #include "../Types.h"
+#include "../Types/BaseEntity.h"
 
 #include "../RemoveSourceSpecifics.h"
 
