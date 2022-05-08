@@ -17,10 +17,7 @@ public:
     void initialize(JS::GlobalObject&) override;
     ~Entity() override = default;
 
-    static Entity* create(GlobalObject& global_object, CBaseEntity* entity)
-    {
-        return global_object.heap().allocate<Entity>(global_object, global_object, entity);
-    }
+    static Entity* create(GlobalObject& global_object, CBaseEntity* entity);
 
     CBaseEntity* entity() { return m_entity; }
 

@@ -13,5 +13,10 @@ Entity::Entity(GlobalObject& global_object, CBaseEntity* entity)
 {
 }
 
+Entity* Entity::create(GlobalObject& global_object, CBaseEntity* entity)
+{
+    return global_object.heap().allocate<Entity>(global_object, global_object, entity);
+}
+
 void Entity::initialize(JS::GlobalObject& global_object) { Object::initialize(global_object); }
 }
