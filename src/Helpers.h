@@ -1,6 +1,7 @@
 #pragma once
 
 #include <datamap.h>
+#include <dt_send.h>
 
 #include "RemoveSourceSpecifics.h"
 
@@ -19,4 +20,6 @@ inline Function get_function_from_vtable_index(const T* object_base_address, int
 Optional<typedescription_t&> find_type_description_from_datamap_by_name(datamap_t&, StringView field_name);
 Optional<typedescription_t&> find_type_description_from_datamap_by_name_including_base(datamap_t&,
                                                                                        StringView field_name);
+Optional<SendProp&> find_send_property_from_send_table(SendTable&, StringView property_name);
+Optional<SendProp&> find_send_property_from_send_table_including_base(SendTable&, StringView property_name);
 }
