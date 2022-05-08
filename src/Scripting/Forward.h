@@ -8,4 +8,5 @@ class EntityPrototype;
 class Game;
 class GlobalObject;
 class Server;
+class TeamRoundTimerPrototype;
 }

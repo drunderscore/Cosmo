@@ -38,6 +38,7 @@ add_library(Cosmo SHARED
         src/Scripting/GlobalObject.cpp
         src/Scripting/Helpers.cpp
         src/Scripting/Server.cpp
+        src/Scripting/TeamRoundTimerPrototype.cpp
         )
 
 target_compile_definitions(Cosmo PRIVATE
