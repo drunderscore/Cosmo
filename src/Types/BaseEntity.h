@@ -39,16 +39,14 @@ public:
     inline const char* GetClassname()
     {
         return get_value_by_type_description<string_t>(
-                   Cosmo::find_type_description_from_datamap_by_name_including_base(*GetDataDescMap(), "m_iClassname")
-                       .value())
+                   *Cosmo::find_type_description_from_datamap_by_name_including_base(*GetDataDescMap(), "m_iClassname"))
             ->ToCStr();
     }
 
     inline Cosmo::SourceVector& GetAbsOrigin()
     {
         return *get_value_by_type_description<Cosmo::SourceVector>(
-            Cosmo::find_type_description_from_datamap_by_name_including_base(*GetDataDescMap(), "m_vecAbsOrigin")
-                .value());
+            *Cosmo::find_type_description_from_datamap_by_name_including_base(*GetDataDescMap(), "m_vecAbsOrigin"));
     }
 
     inline void Teleport(Cosmo::SourceVector* new_position, QAngle* new_angles, Cosmo::SourceVector* new_velocity)
@@ -86,6 +84,6 @@ public:
     inline int GetTeamNumber()
     {
         return *get_value_by_type_description<int>(
-            Cosmo::find_type_description_from_datamap_by_name_including_base(*GetDataDescMap(), "m_iTeamNum").value());
+            *Cosmo::find_type_description_from_datamap_by_name_including_base(*GetDataDescMap(), "m_iTeamNum"));
     }
 };
