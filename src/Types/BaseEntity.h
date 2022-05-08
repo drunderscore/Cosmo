@@ -1,5 +1,6 @@
 #pragma once
 
+#include <basetypes.h> // string_t.h needs this but doesn't include it
 #include <iserverentity.h>
 
 #include "../RemoveSourceSpecifics.h"
