@@ -24,6 +24,12 @@ public:
             this, 25)(this, model.characters());
     }
 
+    inline ServerClass* GetServerClass() const
+    {
+        return Cosmo::get_function_from_vtable_index<__attribute__((cdecl)) ServerClass* (*)(const CBaseEntity*)>(
+            this, 10)(this);
+    }
+
     inline datamap_t* GetDataDescMap() const
     {
         return Cosmo::get_function_from_vtable_index<__attribute__((cdecl)) datamap_t* (*)(const CBaseEntity*)>(
@@ -63,6 +69,12 @@ public:
     inline T* get_value_by_type_description(typedescription_t& type_description)
     {
         return reinterpret_cast<T*>(reinterpret_cast<FlatPtr>(this) + type_description.fieldOffset[TD_OFFSET_NORMAL]);
+    }
+
+    template<typename T>
+    inline T* get_value_by_send_property(SendProp& send_prop)
+    {
+        return reinterpret_cast<T*>(reinterpret_cast<FlatPtr>(this) + send_prop.GetOffset());
     }
 
     inline void ChangeTeam(int team)

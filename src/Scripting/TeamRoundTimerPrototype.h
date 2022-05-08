@@ -20,6 +20,9 @@ public:
 private:
     JS_DECLARE_NATIVE_FUNCTION(time_remaining_getter);
     JS_DECLARE_NATIVE_FUNCTION(time_remaining_setter);
+    JS_DECLARE_NATIVE_FUNCTION(paused_getter);
+    JS_DECLARE_NATIVE_FUNCTION(paused_setter);
+
     JS_DECLARE_NATIVE_FUNCTION(add_seconds);
 };
 }
