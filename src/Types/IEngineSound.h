@@ -1,3 +1,4 @@
+// clang-format off
 // Copy-pasted from: public/engine/IEngineSound.h
 // Rationale: Replace Vector with Cosmo::SourceVector
 
@@ -126,3 +127,4 @@ public:
 
 
 #endif // IENGINESOUND_H
+// clang-format on
