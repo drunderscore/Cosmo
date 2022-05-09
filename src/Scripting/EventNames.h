@@ -5,7 +5,8 @@
 #define ENUMERATE_COSMO_EVENT_NAMES(M)                                                                                 \
     M("PlayerConnect", player_connect)                                                                                 \
     M("PlayerDisconnect", player_disconnect)                                                                           \
-    M("PlayerActive", player_active)
+    M("PlayerActive", player_active)                                                                                   \
+    M("EntityCreate", entity_create)
 
 namespace Cosmo::Scripting
 {

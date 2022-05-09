@@ -27,6 +27,9 @@ include(cmake/GetGitRevisionDescription.cmake)
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 string(SUBSTRING ${GIT_SHA1} 0 7 GIT_SHA1_SHORT)
 
+set(SUBHOOK_TESTS OFF CACHE BOOL "Disable subhook tests" FORCE)
+add_subdirectory(subhook)
+
 add_library(Cosmo SHARED
         src/Cosmo.cpp
         src/Dump.cpp
@@ -91,4 +94,4 @@ target_include_directories(Cosmo PRIVATE SYSTEM
 
 set_target_properties(Cosmo PROPERTIES PREFIX "")
 target_link_directories(Cosmo PRIVATE ${HL2SDK_PATH}/lib/linux)
-target_link_libraries(Cosmo PRIVATE Lagom::Core Lagom::JS -l:tier1_i486.a -l:libvstdlib_srv.so -l:libtier0_srv.so)
+target_link_libraries(Cosmo PRIVATE Lagom::Core Lagom::JS subhook::subhook -l:tier1_i486.a -l:libvstdlib_srv.so -l:libtier0_srv.so)

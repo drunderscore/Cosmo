@@ -8,9 +8,11 @@
 #include "RemoveSourceSpecifics.h"
 
 #include "Scripting/GlobalObject.h"
+#include "Signature.h"
 #include <LibJS/Console.h>
 #include <LibJS/Interpreter.h>
 #include <LibJS/Runtime/VM.h>
+#include <subhook/subhook.h>
 
 namespace Cosmo
 {
@@ -83,6 +85,8 @@ private:
 
     static SpewRetval_t ansi_true_color_spew_output(SpewType_t spewType, const tchar* pMsg);
 
+    static CBaseEntity* create_entity_by_name_hook(const char* classname, int forced_edict_index);
+
     bool on_client_connect(edict_t*, const char* name, const char* address, char* reject_message,
                            int reject_message_max_length);
 
@@ -101,6 +105,9 @@ private:
     NonnullOwnPtr<JS::Interpreter> m_interpreter;
     Scripting::GlobalObject& m_global_object;
     Console m_console;
+
+    static Signature s_create_entity_by_name_function;
+    static subhook_t s_create_entity_by_name_subhook;
 };
 
 PLUGIN_GLOBALVARS()

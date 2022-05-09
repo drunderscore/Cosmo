@@ -25,6 +25,15 @@ static Array<Optional<Color>, SPEW_TYPE_COUNT> s_default_spew_colors = {
     Color(255, 20, 20),
     Color(20, 70, 255),
 };
+
+typedef CBaseEntity* (*CreateEntityByNameFn)(const char* classname, int forced_edict_index);
+Signature Plugin::s_create_entity_by_name_function(
+    "55 89 E5 56 53 83 EC 10 8B 5D 0C 8B 75 08 83 FB FF 74 1A A1 ? ? ? ? 8B 10");
+subhook_t Plugin::s_create_entity_by_name_subhook;
+
+// No StringView, ensure it's null-terminated
+static String s_server_library_name = "tf/bin/server_srv.so";
+
 PLUGIN_EXPOSE(CosmoPlugin, Plugin::s_the)
 
 class BaseAccessor : public IConCommandBaseAccessor
@@ -75,6 +84,17 @@ bool Plugin::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool l
 {
     PLUGIN_SAVEVARS()
 
+    auto create_entity_by_name_address =
+        s_create_entity_by_name_function.find_in_library(s_server_library_name.characters());
+    if (!create_entity_by_name_address.has_value())
+    {
+        if (error && maxlen)
+        {
+            strncpy(error, "Could not find signature for CreateEntityByName", maxlen);
+            return false;
+        }
+    }
+
     GET_V_IFACE_CURRENT(GetEngineFactory, m_cvar, ICvar, CVAR_INTERFACE_VERSION);
     GET_V_IFACE_ANY(GetServerFactory, m_server_game_dll, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL);
     GET_V_IFACE_CURRENT(GetEngineFactory, m_engine_server, IVEngineServer, INTERFACEVERSION_VENGINESERVER);
@@ -110,6 +130,11 @@ bool Plugin::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool l
     }
 #endif
 
+    s_create_entity_by_name_subhook =
+        subhook_new(*create_entity_by_name_address, reinterpret_cast<void*>(create_entity_by_name_hook),
+                    static_cast<subhook_flags>(0));
+    subhook_install(s_create_entity_by_name_subhook);
+
     Msg("Loaded Cosmo\n");
     return true;
 }
@@ -135,6 +160,10 @@ bool Plugin::Unload(char* error, size_t maxlen)
                            true);
     SH_REMOVE_HOOK_MEMFUNC(IServerGameClients, ClientDisconnect, m_server_game_clients, this,
                            &Plugin::on_client_disconnect, false);
+
+    if (subhook_is_installed(s_create_entity_by_name_subhook))
+        subhook_remove(s_create_entity_by_name_subhook);
+    subhook_free(s_create_entity_by_name_subhook);
 
     return true;
 }
@@ -203,6 +232,21 @@ SpewRetval_t Plugin::ansi_true_color_spew_output(SpewType_t spew_type, const tch
     }
 
     return s_original_spew_output_func(spew_type, corrected_message_builder.to_string().characters());
+}
+
+CBaseEntity* Plugin::create_entity_by_name_hook(const char* classname, int forced_edict_index)
+{
+    auto* entity = reinterpret_cast<CreateEntityByNameFn>(subhook_get_trampoline(s_create_entity_by_name_subhook))(
+        classname, forced_edict_index);
+    if (entity)
+    {
+        auto& global_object = Plugin::the().global_object();
+
+        global_object.game_object().dispatch_event(Scripting::EventNames::entity_create,
+                                                   Scripting::Entity::create(global_object, entity));
+    }
+
+    return entity;
 }
 
 bool Plugin::on_client_connect(edict_t* player_edict, const char* name, const char* address, char* reject_message,
