@@ -26,6 +26,7 @@ void EntityPrototype::initialize(JS::GlobalObject& global_object)
     define_native_function("dispatchSpawn", dispatch_spawn, 0, 0);
     define_native_function("teleport", teleport, 3, 0);
     define_native_function("remove", remove, 0, 0);
+    define_native_function("emitSound", emit_sound, 1, 0);
 }
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::model_getter)
@@ -146,6 +147,16 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::remove)
     auto* this_entity = TRY(typed_this_object(global_object));
 
     Plugin::the().server_tools().RemoveEntity(this_entity->entity());
+
+    return JS::js_undefined();
+}
+
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::emit_sound)
+{
+    auto* this_entity = TRY(typed_this_object(global_object));
+
+    Cosmo::Scripting::emit_sound(vm, global_object, vm.argument(0), vm.argument(1), vm.argument(2), vm.argument(3),
+                                 this_entity->entity());
 
     return JS::js_undefined();
 }

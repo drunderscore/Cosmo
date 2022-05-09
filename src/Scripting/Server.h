@@ -18,5 +18,6 @@ private:
     JS_DECLARE_NATIVE_FUNCTION(create_entity_by_name);
     JS_DECLARE_NATIVE_FUNCTION(create_fake_client);
     JS_DECLARE_NATIVE_FUNCTION(get_entity_by_index);
+    JS_DECLARE_NATIVE_FUNCTION(emit_sound);
 };
 }

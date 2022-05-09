@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Forward.h"
+#include "Types/IEngineSound.h"
 #include <ISmmPlugin.h>
 #include <eiface.h>
 #include <toolframework/itoolentity.h>
@@ -64,6 +65,7 @@ public:
     IServerTools& server_tools() const { return *m_server_tools; }
     IServerGameEnts& server_game_ents() const { return *m_server_game_ents; }
     IServerGameClients& server_game_clients() const { return *m_server_game_clients; }
+    IEngineSound& engine_sound() const { return *m_engine_sound; }
 
     static Plugin& the() { return s_the; }
     static Plugin s_the;
@@ -102,6 +104,7 @@ private:
     IServerTools* m_server_tools{};
     IServerGameEnts* m_server_game_ents{};
     IServerGameClients* m_server_game_clients{};
+    IEngineSound* m_engine_sound{};
 
     NonnullRefPtr<JS::VM> m_vm;
     NonnullOwnPtr<JS::Interpreter> m_interpreter;

@@ -115,6 +115,7 @@ bool Plugin::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool l
     GET_V_IFACE_CURRENT(GetServerFactory, m_server_tools, IServerTools, VSERVERTOOLS_INTERFACE_VERSION);
     GET_V_IFACE_CURRENT(GetServerFactory, m_server_game_ents, IServerGameEnts, INTERFACEVERSION_SERVERGAMEENTS);
     GET_V_IFACE_ANY(GetServerFactory, m_server_game_clients, IServerGameClients, INTERFACEVERSION_SERVERGAMECLIENTS);
+    GET_V_IFACE_CURRENT(GetEngineFactory, m_engine_sound, IEngineSound, IENGINESOUND_SERVER_INTERFACE_VERSION);
 
     SH_ADD_HOOK_MEMFUNC(IServerGameClients, ClientConnect, m_server_game_clients, this, &Plugin::on_client_connect,
                         false);

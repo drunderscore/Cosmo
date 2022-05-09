@@ -96,4 +96,52 @@ JS::Array* from_source_vector(JS::GlobalObject& global_object, SourceVector& vec
     return JS::Array::create_from<vec_t>(global_object, {reinterpret_cast<vec_t*>(&vector), 3},
                                          [](const auto& value) { return JS::Value(value); });
 }
+
+JS::ThrowCompletionOr<void> emit_sound(JS::VM& vm, JS::GlobalObject& global_object, JS::Value sound_name,
+                                       JS::Value filter_argument, JS::Value volume_argument, JS::Value pitch_argument,
+                                       Variant<CBaseEntity*, Cosmo::SourceVector> sound_source)
+{
+    if (!sound_name.is_string())
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAString, sound_name);
+
+    auto filter = filter_argument.is_nullish() ? RecipientFilter::all()
+                                               : TRY(to_recipient_filter(vm, global_object, filter_argument));
+
+    auto volume = 1.0f;
+    auto pitch = 100;
+
+    if (volume_argument.is_number())
+    {
+        volume = static_cast<float>(volume_argument.as_double());
+        if (volume < 0.0f || volume > 1.0f)
+            return vm.throw_completion<JS::RangeError>(global_object,
+                                                       String::formatted("Volume {} of is out of range", volume));
+    }
+
+    if (pitch_argument.is_number())
+    {
+        pitch = pitch_argument.as_i32();
+        if (pitch <= 0 || pitch > 255)
+            return vm.throw_completion<JS::RangeError>(global_object,
+                                                       String::formatted("Pitch {} of is out of range", pitch));
+    }
+
+    Plugin::the().engine_sound().PrecacheSound(sound_name.as_string().string().characters());
+
+    Cosmo::SourceVector position;
+    int entity_index{};
+
+    sound_source.visit(
+        [&entity_index](CBaseEntity* entity_source) { entity_index = entity_source->GetRefEHandle().GetEntryIndex(); },
+        [&position](Cosmo::SourceVector& position_source) { position = position_source; });
+
+    // pDirection and bUpdatePositions are NOT supported on the server and will assert (must be left as default:
+    // nullptr and true)
+    // As stated in shareddefs.h, sound time is: "NOT DURATION, but rather, some absolute time in the future until which
+    // this sound should be delayed"
+    Plugin::the().engine_sound().EmitSound(filter, entity_index, 0, sound_name.as_string().string().characters(),
+                                           volume, SNDLVL_NORM, 0, pitch, 0, &position);
+
+    return {};
+}
 }
