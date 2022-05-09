@@ -39,6 +39,7 @@ add_library(Cosmo SHARED
         src/Scripting/Helpers.cpp
         src/Scripting/Server.cpp
         src/Scripting/TeamRoundTimerPrototype.cpp
+        src/Signature.cpp
         )
 
 target_compile_definitions(Cosmo PRIVATE
