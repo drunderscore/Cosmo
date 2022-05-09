@@ -23,9 +23,9 @@ public:
     {
         return static_cast<T*>(m_entity);
     }
-    // clang-format on
 
 private:
+    // clang-format on
     // FIXME: This is very much not correct! Once this entity is destroyed, this pointer is garbage.
     //        This is a UAF in script.
     //        How can we use EHANDLE/CHandle here? Or our own method of knowing an entities lifetime?
