@@ -41,10 +41,7 @@ public:
     }
 
 private:
-    JS_DECLARE_NATIVE_FUNCTION(map_getter);
-    JS_DECLARE_NATIVE_FUNCTION(map_setter);
     JS_DECLARE_NATIVE_FUNCTION(mod_description_getter);
-    JS_DECLARE_NATIVE_FUNCTION(say_text_2);
     JS_DECLARE_NATIVE_FUNCTION(on);
 
     Command* m_command_object{};
