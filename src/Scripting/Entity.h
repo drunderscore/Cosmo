@@ -17,12 +17,13 @@ public:
 
     static Entity* create(GlobalObject& global_object, CBaseEntity* entity);
 
+    // clang-format off
     template<typename T = CBaseEntity>
-        requires(IsBaseOf<CBaseEntity, T>)
-    T* entity()
+    T* entity() requires(IsBaseOf<CBaseEntity, T>)
     {
         return static_cast<T*>(m_entity);
     }
+    // clang-format on
 
 private:
     // FIXME: This is very much not correct! Once this entity is destroyed, this pointer is garbage.
