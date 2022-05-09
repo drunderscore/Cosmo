@@ -31,6 +31,10 @@ Signature Plugin::s_create_entity_by_name_function(
     "55 89 E5 56 53 83 EC 10 8B 5D 0C 8B 75 08 83 FB FF 74 1A A1 ? ? ? ? 8B 10");
 subhook_t Plugin::s_create_entity_by_name_subhook;
 
+typedef int (*DispatchSpawnFn)(CBaseEntity*);
+Signature Plugin::s_dispatch_spawn_function("55 89 E5 57 56 53 83 EC 2C 8B 5D 08 85 DB 0F ? ? ? ? ? A1 ? ? ? ? 89 C1");
+subhook_t Plugin::s_dispatch_spawn_subhook;
+
 // No StringView, ensure it's null-terminated
 static String s_server_library_name = "tf/bin/server_srv.so";
 
@@ -95,6 +99,16 @@ bool Plugin::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool l
         }
     }
 
+    auto dispatch_spawn_address = s_dispatch_spawn_function.find_in_library(s_server_library_name.characters());
+    if (!dispatch_spawn_address.has_value())
+    {
+        if (error && maxlen)
+        {
+            strncpy(error, "Could not find signature for DispatchSpawn", maxlen);
+            return false;
+        }
+    }
+
     GET_V_IFACE_CURRENT(GetEngineFactory, m_cvar, ICvar, CVAR_INTERFACE_VERSION);
     GET_V_IFACE_ANY(GetServerFactory, m_server_game_dll, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL);
     GET_V_IFACE_CURRENT(GetEngineFactory, m_engine_server, IVEngineServer, INTERFACEVERSION_VENGINESERVER);
@@ -135,6 +149,10 @@ bool Plugin::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool l
                     static_cast<subhook_flags>(0));
     subhook_install(s_create_entity_by_name_subhook);
 
+    s_dispatch_spawn_subhook = subhook_new(*dispatch_spawn_address, reinterpret_cast<void*>(dispatch_spawn_hook),
+                                           static_cast<subhook_flags>(0));
+    subhook_install(s_dispatch_spawn_subhook);
+
     Msg("Loaded Cosmo\n");
     return true;
 }
@@ -164,6 +182,10 @@ bool Plugin::Unload(char* error, size_t maxlen)
     if (subhook_is_installed(s_create_entity_by_name_subhook))
         subhook_remove(s_create_entity_by_name_subhook);
     subhook_free(s_create_entity_by_name_subhook);
+
+    if (subhook_is_installed(s_dispatch_spawn_subhook))
+        subhook_remove(s_dispatch_spawn_subhook);
+    subhook_free(s_dispatch_spawn_subhook);
 
     return true;
 }
@@ -247,6 +269,20 @@ CBaseEntity* Plugin::create_entity_by_name_hook(const char* classname, int force
     }
 
     return entity;
+}
+
+int Plugin::dispatch_spawn_hook(CBaseEntity* entity)
+{
+    auto success = reinterpret_cast<DispatchSpawnFn>(subhook_get_trampoline(s_dispatch_spawn_subhook))(entity);
+    if (success == 0)
+    {
+        auto& global_object = Plugin::the().global_object();
+
+        global_object.game_object().dispatch_event(Scripting::EventNames::entity_spawn,
+                                                   Scripting::Entity::create(global_object, entity));
+    }
+
+    return success;
 }
 
 bool Plugin::on_client_connect(edict_t* player_edict, const char* name, const char* address, char* reject_message,

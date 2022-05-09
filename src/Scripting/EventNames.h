@@ -6,7 +6,8 @@
     M("PlayerConnect", player_connect)                                                                                 \
     M("PlayerDisconnect", player_disconnect)                                                                           \
     M("PlayerActive", player_active)                                                                                   \
-    M("EntityCreate", entity_create)
+    M("EntityCreate", entity_create)                                                                                   \
+    M("EntitySpawn", entity_spawn)
 
 namespace Cosmo::Scripting
 {

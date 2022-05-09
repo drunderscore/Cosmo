@@ -87,6 +87,8 @@ private:
 
     static CBaseEntity* create_entity_by_name_hook(const char* classname, int forced_edict_index);
 
+    static int dispatch_spawn_hook(CBaseEntity*);
+
     bool on_client_connect(edict_t*, const char* name, const char* address, char* reject_message,
                            int reject_message_max_length);
 
@@ -108,6 +110,9 @@ private:
 
     static Signature s_create_entity_by_name_function;
     static subhook_t s_create_entity_by_name_subhook;
+
+    static Signature s_dispatch_spawn_function;
+    static subhook_t s_dispatch_spawn_subhook;
 };
 
 PLUGIN_GLOBALVARS()
