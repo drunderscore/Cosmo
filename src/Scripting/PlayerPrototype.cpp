@@ -17,6 +17,7 @@ void PlayerPrototype::initialize(JS::GlobalObject& global_object)
     Prototype::initialize(global_object);
     define_native_accessor("name", name_getter, name_setter, 0);
     define_native_accessor("userId", userid_getter, {}, 0);
+    define_native_function("disconnect", disconnect, 0, 0);
 }
 
 JS_DEFINE_NATIVE_FUNCTION(PlayerPrototype::name_getter)
@@ -65,5 +66,23 @@ JS_DEFINE_NATIVE_FUNCTION(PlayerPrototype::userid_getter)
         return vm.throw_completion<JS::InternalError>(global_object, "Failed to get client");
 
     return client->GetUserID();
+}
+
+JS_DEFINE_NATIVE_FUNCTION(PlayerPrototype::disconnect)
+{
+    auto* this_entity = TRY(EntityPrototype::ensure_this_entity(vm, global_object));
+
+    auto reason = vm.argument(0);
+
+    auto* client = Plugin::the().engine_server().GetIServer()->GetClient(
+        this_entity->entity()->GetRefEHandle().GetEntryIndex() - 1);
+
+    if (!client || !client->IsConnected())
+        return vm.throw_completion<JS::InternalError>(global_object, "Failed to get client");
+
+    // Default kick message, from kickid command
+    client->Disconnect("%s", reason.is_string() ? reason.as_string().string().characters() : "Kicked from server");
+
+    return JS::js_undefined();
 }
 }
