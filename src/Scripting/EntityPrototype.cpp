@@ -22,6 +22,7 @@ void EntityPrototype::initialize(JS::GlobalObject& global_object)
     define_native_accessor("classname", classname_getter, {}, 0);
     define_native_accessor("position", position_getter, position_setter, 0);
     define_native_accessor("team", team_getter, team_setter, 0);
+    define_native_accessor("isValid", is_valid, {}, 0);
 
     define_native_function("dispatchSpawn", dispatch_spawn, 0, 0);
     define_native_function("teleport", teleport, 3, 0);
@@ -29,16 +30,26 @@ void EntityPrototype::initialize(JS::GlobalObject& global_object)
     define_native_function("emitSound", emit_sound, 1, 0);
 }
 
+JS::ThrowCompletionOr<Entity*> EntityPrototype::ensure_this_entity(JS::VM& vm, JS::GlobalObject& global_object)
+{
+    auto* this_entity = TRY(typed_this_value(global_object));
+
+    if (!this_entity->is_valid())
+        return vm.throw_completion<JS::Error>(global_object, "Entity is not valid");
+
+    return this_entity;
+}
+
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::model_getter)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(ensure_this_entity(vm, global_object));
 
     return JS::js_string(vm, this_entity->entity()->GetModelName().ToCStr());
 }
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::model_setter)
 {
-    auto* this_entity = TRY(typed_this_value(global_object));
+    auto* this_entity = TRY(ensure_this_entity(vm, global_object));
 
     auto model_name = vm.argument(0);
     if (!model_name.is_string())
@@ -54,28 +65,30 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::model_setter)
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::index_getter)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(ensure_this_entity(vm, global_object));
 
     return this_entity->entity()->GetRefEHandle().GetEntryIndex();
 }
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::is_player)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(ensure_this_entity(vm, global_object));
 
     return this_entity->entity()->IsPlayer();
 }
 
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::is_valid) { return !ensure_this_entity(vm, global_object).is_error(); }
+
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::classname_getter)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(ensure_this_entity(vm, global_object));
 
     return JS::js_string(vm, this_entity->entity()->GetClassname());
 }
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::dispatch_spawn)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(ensure_this_entity(vm, global_object));
 
     Plugin::the().server_tools().DispatchSpawn(this_entity->entity());
 
@@ -84,14 +97,14 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::dispatch_spawn)
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::position_getter)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(ensure_this_entity(vm, global_object));
 
     return from_source_vector(global_object, this_entity->entity()->GetAbsOrigin());
 }
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::position_setter)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(ensure_this_entity(vm, global_object));
 
     auto vector = TRY(to_source_vector(vm, global_object, vm.argument(0)));
 
@@ -102,7 +115,7 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::position_setter)
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::teleport)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(ensure_this_entity(vm, global_object));
 
     Optional<SourceVector> new_position;
     Optional<QAngle> new_angles;
@@ -124,14 +137,14 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::teleport)
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::team_getter)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(ensure_this_entity(vm, global_object));
 
     return this_entity->entity()->GetTeamNumber();
 }
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::team_setter)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(ensure_this_entity(vm, global_object));
 
     auto team = vm.argument(0);
     if (!team.is_number())
@@ -144,7 +157,7 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::team_setter)
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::remove)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(ensure_this_entity(vm, global_object));
 
     Plugin::the().server_tools().RemoveEntity(this_entity->entity());
 
@@ -153,7 +166,7 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::remove)
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::emit_sound)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(ensure_this_entity(vm, global_object));
 
     Cosmo::Scripting::emit_sound(vm, global_object, vm.argument(0), vm.argument(1), vm.argument(2), vm.argument(3),
                                  this_entity->entity());

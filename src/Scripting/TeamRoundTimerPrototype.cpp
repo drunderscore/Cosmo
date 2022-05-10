@@ -22,14 +22,14 @@ void TeamRoundTimerPrototype::initialize(JS::GlobalObject& global_object)
 
 JS_DEFINE_NATIVE_FUNCTION(TeamRoundTimerPrototype::time_remaining_getter)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(EntityPrototype::ensure_this_entity(vm, global_object));
 
     return this_entity->entity<CTeamRoundTimer>()->GetTimeRemaining();
 }
 
 JS_DEFINE_NATIVE_FUNCTION(TeamRoundTimerPrototype::time_remaining_setter)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(EntityPrototype::ensure_this_entity(vm, global_object));
 
     auto time_remaining = vm.argument(0);
     if (!time_remaining.is_number())
@@ -42,7 +42,7 @@ JS_DEFINE_NATIVE_FUNCTION(TeamRoundTimerPrototype::time_remaining_setter)
 
 JS_DEFINE_NATIVE_FUNCTION(TeamRoundTimerPrototype::add_seconds)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(EntityPrototype::ensure_this_entity(vm, global_object));
 
     auto seconds_to_add = vm.argument(0);
     if (!seconds_to_add.is_number())
@@ -60,14 +60,14 @@ JS_DEFINE_NATIVE_FUNCTION(TeamRoundTimerPrototype::add_seconds)
 
 JS_DEFINE_NATIVE_FUNCTION(TeamRoundTimerPrototype::paused_getter)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(EntityPrototype::ensure_this_entity(vm, global_object));
 
     return this_entity->entity<CTeamRoundTimer>()->IsTimerPaused();
 }
 
 JS_DEFINE_NATIVE_FUNCTION(TeamRoundTimerPrototype::paused_setter)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(EntityPrototype::ensure_this_entity(vm, global_object));
 
     auto is_paused = vm.argument(0);
     if (!is_paused.is_boolean())

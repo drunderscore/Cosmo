@@ -14,6 +14,8 @@ public:
     virtual void initialize(JS::GlobalObject&) override;
     virtual ~EntityPrototype() override = default;
 
+    static JS::ThrowCompletionOr<Entity*> ensure_this_entity(JS::VM& vm, JS::GlobalObject& global_object);
+
 private:
     JS_DECLARE_NATIVE_FUNCTION(model_getter);
     JS_DECLARE_NATIVE_FUNCTION(model_setter);
@@ -25,6 +27,7 @@ private:
     JS_DECLARE_NATIVE_FUNCTION(team_setter);
 
     JS_DECLARE_NATIVE_FUNCTION(is_player);
+    JS_DECLARE_NATIVE_FUNCTION(is_valid);
 
     JS_DECLARE_NATIVE_FUNCTION(dispatch_spawn);
     JS_DECLARE_NATIVE_FUNCTION(teleport);

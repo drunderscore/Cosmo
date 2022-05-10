@@ -21,7 +21,7 @@ void PlayerPrototype::initialize(JS::GlobalObject& global_object)
 
 JS_DEFINE_NATIVE_FUNCTION(PlayerPrototype::name_getter)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(EntityPrototype::ensure_this_entity(vm, global_object));
 
     auto* client = Plugin::the().engine_server().GetIServer()->GetClient(
         this_entity->entity()->GetRefEHandle().GetEntryIndex() - 1);
@@ -34,7 +34,7 @@ JS_DEFINE_NATIVE_FUNCTION(PlayerPrototype::name_getter)
 
 JS_DEFINE_NATIVE_FUNCTION(PlayerPrototype::name_setter)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(EntityPrototype::ensure_this_entity(vm, global_object));
 
     auto name = vm.argument(0);
     if (!name.is_string())
@@ -56,7 +56,7 @@ JS_DEFINE_NATIVE_FUNCTION(PlayerPrototype::name_setter)
 
 JS_DEFINE_NATIVE_FUNCTION(PlayerPrototype::userid_getter)
 {
-    auto* this_entity = TRY(typed_this_object(global_object));
+    auto* this_entity = TRY(EntityPrototype::ensure_this_entity(vm, global_object));
 
     auto* client = Plugin::the().engine_server().GetIServer()->GetClient(
         this_entity->entity()->GetRefEHandle().GetEntryIndex() - 1);

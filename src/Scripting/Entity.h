@@ -3,6 +3,7 @@
 #include "../Forward.h"
 #include "Forward.h"
 #include <LibJS/Runtime/Object.h>
+#include <basehandle.h>
 
 namespace Cosmo::Scripting
 {
@@ -12,23 +13,23 @@ class Entity : public JS::Object
 
 public:
     Entity(Object&, CBaseEntity*);
+    Entity(Object&, const CBaseHandle&);
     void initialize(JS::GlobalObject&) override;
     ~Entity() override = default;
 
     static Entity* create(GlobalObject& global_object, CBaseEntity* entity);
 
+    bool is_valid();
+
     // clang-format off
     template<typename T = CBaseEntity>
     T* entity() requires(IsBaseOf<CBaseEntity, T>)
     {
-        return static_cast<T*>(m_entity);
+        return static_cast<T*>(m_handle.Get());
     }
 
 private:
     // clang-format on
-    // FIXME: This is very much not correct! Once this entity is destroyed, this pointer is garbage.
-    //        This is a UAF in script.
-    //        How can we use EHANDLE/CHandle here? Or our own method of knowing an entities lifetime?
-    CBaseEntity* m_entity{};
+    CBaseHandle m_handle;
 };
 }
