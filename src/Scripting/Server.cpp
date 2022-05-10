@@ -26,6 +26,7 @@ void Server::initialize(JS::GlobalObject& global_object)
     define_native_function("emitSound", emit_sound, 2, 0);
     define_native_function("sayText2", say_text_2, 8, 0);
     define_native_function("getPlayerByUserId", get_player_by_userid, 1, 0);
+    define_native_function("getEntityByHandle", get_entity_by_handle, 1, 0);
 }
 
 JS_DEFINE_NATIVE_FUNCTION(Server::map_getter) { return JS::js_string(vm, g_SMAPI->GetCGlobals()->mapname.ToCStr()); }
@@ -166,5 +167,25 @@ JS_DEFINE_NATIVE_FUNCTION(Server::get_player_by_userid)
     }
 
     return JS::js_undefined();
+}
+
+JS_DEFINE_NATIVE_FUNCTION(Server::get_entity_by_handle)
+{
+    auto handle_number = vm.argument(0);
+    if (!handle_number.is_number())
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::IsNotA, handle_number, "number");
+
+    if (handle_number.as_i32() == INVALID_NETWORKED_EHANDLE_VALUE)
+        return JS::js_undefined();
+
+    CBaseHandle handle(handle_number.as_i32());
+    if (!handle.IsValid())
+        return JS::js_undefined();
+
+    auto* entity = Plugin::the().server_tools().GetBaseEntityByEntIndex(handle.GetEntryIndex());
+    if (!entity)
+        return JS::js_undefined();
+
+    return Entity::create(verify_cast<GlobalObject>(global_object), entity);
 }
 }

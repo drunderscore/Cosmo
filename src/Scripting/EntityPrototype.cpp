@@ -1,6 +1,7 @@
 #include "../Cosmo.h"
 #include "../Types.h"
 #include "../Types/BaseEntity.h"
+#include <server_class.h>
 
 #include "../RemoveSourceSpecifics.h"
 
@@ -28,6 +29,10 @@ void EntityPrototype::initialize(JS::GlobalObject& global_object)
     define_native_function("teleport", teleport, 3, 0);
     define_native_function("remove", remove, 0, 0);
     define_native_function("emitSound", emit_sound, 1, 0);
+    define_native_function("getDataFieldValue", get_data_field_value, 1, 0);
+    define_native_function("getSendPropertyValue", get_send_property_value, 1, 0);
+    define_native_function("setDataFieldValue", set_data_field_value, 2, 0);
+    define_native_function("setSendPropertyValue", set_send_property_value, 2, 0);
 }
 
 JS::ThrowCompletionOr<Entity*> EntityPrototype::ensure_this_entity(JS::VM& vm, JS::GlobalObject& global_object)
@@ -170,6 +175,278 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::emit_sound)
 
     Cosmo::Scripting::emit_sound(vm, global_object, vm.argument(0), vm.argument(1), vm.argument(2), vm.argument(3),
                                  this_entity->entity());
+
+    return JS::js_undefined();
+}
+
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::get_data_field_value)
+{
+    auto* this_entity = TRY(typed_this_object(global_object));
+
+    auto field_name = vm.argument(0);
+    if (!field_name.is_string())
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAString, field_name);
+
+    auto maybe_type_description = find_type_description_from_datamap_by_name_including_base(
+        *this_entity->entity()->GetDataDescMap(), field_name.as_string().string());
+
+    if (!maybe_type_description.has_value())
+        return vm.throw_completion<JS::Error>(global_object,
+                                              String::formatted("Unable to find data field {}", field_name));
+
+    switch (maybe_type_description->fieldType)
+    {
+        case FIELD_FLOAT:
+            return *this_entity->entity()->get_value_by_type_description<float>(*maybe_type_description);
+        case FIELD_STRING:
+            return JS::js_string(
+                vm, this_entity->entity()->get_value_by_type_description<string_t>(*maybe_type_description)->ToCStr());
+        case FIELD_VECTOR:
+        case FIELD_POSITION_VECTOR:
+            return from_source_vector(
+                global_object,
+                *this_entity->entity()->get_value_by_type_description<SourceVector>(*maybe_type_description));
+        case FIELD_INTEGER:
+            return *this_entity->entity()->get_value_by_type_description<int>(*maybe_type_description);
+        case FIELD_BOOLEAN:
+            return *this_entity->entity()->get_value_by_type_description<bool>(*maybe_type_description);
+        case FIELD_SHORT:
+            return *this_entity->entity()->get_value_by_type_description<i16>(*maybe_type_description);
+        case FIELD_CHARACTER:
+            return *this_entity->entity()->get_value_by_type_description<char>(*maybe_type_description);
+        case FIELD_CLASSPTR:
+        {
+            auto* entity_pointer =
+                *this_entity->entity()->get_value_by_type_description<CBaseEntity*>(*maybe_type_description);
+
+            if (!entity_pointer)
+                return JS::js_undefined();
+
+            return Entity::create(verify_cast<GlobalObject>(global_object), entity_pointer);
+        }
+        case FIELD_EHANDLE:
+        {
+            auto* handle = this_entity->entity()->get_value_by_type_description<CBaseHandle>(*maybe_type_description);
+            if (auto* entity = static_cast<CBaseEntity*>(handle->Get()); entity)
+                return Entity::create(verify_cast<GlobalObject>(global_object), entity);
+
+            return JS::js_undefined();
+        }
+        case FIELD_EDICT:
+        {
+            auto* edict_pointer =
+                *this_entity->entity()->get_value_by_type_description<edict_t*>(*maybe_type_description);
+
+            if (!edict_pointer)
+                return JS::js_undefined();
+
+            auto* entity_pointer = Plugin::the().server_game_ents().EdictToBaseEntity(edict_pointer);
+            if (!entity_pointer)
+                return JS::js_undefined();
+
+            return Entity::create(verify_cast<GlobalObject>(global_object), entity_pointer);
+        }
+        default:
+            return vm.throw_completion<JS::InternalError>(global_object,
+                                                          "Unable to represent data field type in script");
+    }
+}
+
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::get_send_property_value)
+{
+    auto* this_entity = TRY(typed_this_object(global_object));
+
+    auto property_name = vm.argument(0);
+    if (!property_name.is_string())
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAString, property_name);
+
+    auto maybe_send_property = find_send_property_from_send_table_including_base(
+        *this_entity->entity()->GetServerClass()->m_pTable, property_name.as_string().string());
+
+    if (!maybe_send_property.has_value())
+        return vm.throw_completion<JS::Error>(global_object,
+                                              String::formatted("Unable to find send property {}", property_name));
+
+    switch (maybe_send_property->GetType())
+    {
+        case DPT_Int:
+            return *this_entity->entity()->get_value_by_send_property<int>(*maybe_send_property);
+        case DPT_Float:
+            return *this_entity->entity()->get_value_by_send_property<float>(*maybe_send_property);
+        case DPT_Vector:
+            return from_source_vector(
+                global_object, *this_entity->entity()->get_value_by_send_property<SourceVector>(*maybe_send_property));
+        case DPT_String:
+            return JS::js_string(
+                vm, this_entity->entity()->get_value_by_send_property<string_t>(*maybe_send_property)->ToCStr());
+
+        default:
+            return vm.throw_completion<JS::InternalError>(global_object,
+                                                          "Unable to represent send property type in script");
+    }
+}
+
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::set_data_field_value)
+{
+    auto* this_entity = TRY(typed_this_object(global_object));
+
+    auto field_name = vm.argument(0);
+    if (!field_name.is_string())
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAString, field_name);
+
+    auto maybe_type_description = find_type_description_from_datamap_by_name_including_base(
+        *this_entity->entity()->GetDataDescMap(), field_name.as_string().string());
+
+    if (!maybe_type_description.has_value())
+        return vm.throw_completion<JS::Error>(global_object,
+                                              String::formatted("Unable to find data field {}", field_name));
+
+    auto new_value = vm.argument(1);
+
+    // Not supplying a value (or supplying undefined) isn't what you should be doing -- explicitly supply null.
+    if (new_value.is_undefined())
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::IsUndefined, new_value);
+
+    switch (maybe_type_description->fieldType)
+    {
+        case FIELD_FLOAT:
+            if (!new_value.is_number())
+                return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::IsNotA, new_value, "number");
+
+            *this_entity->entity()->get_value_by_type_description<float>(*maybe_type_description) =
+                static_cast<float>(new_value.as_double());
+            break;
+        case FIELD_VECTOR:
+        case FIELD_POSITION_VECTOR:
+        {
+            *this_entity->entity()->get_value_by_type_description<SourceVector>(*maybe_type_description) =
+                TRY(to_source_vector(vm, global_object, new_value));
+            break;
+        }
+        case FIELD_INTEGER:
+            if (!new_value.is_number())
+                return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::IsNotA, new_value, "number");
+
+            *this_entity->entity()->get_value_by_type_description<int>(*maybe_type_description) = new_value.as_i32();
+            break;
+        case FIELD_BOOLEAN:
+            if (!new_value.is_boolean())
+                return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::IsNotA, new_value, "boolean");
+
+            *this_entity->entity()->get_value_by_type_description<bool>(*maybe_type_description) = new_value.as_bool();
+            break;
+        case FIELD_SHORT:
+            if (!new_value.is_number())
+                return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::IsNotA, new_value, "number");
+
+            *this_entity->entity()->get_value_by_type_description<i16>(*maybe_type_description) =
+                static_cast<i16>(new_value.as_i32());
+            break;
+        case FIELD_CHARACTER:
+            if (!new_value.is_number())
+                return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::IsNotA, new_value, "number");
+
+            *this_entity->entity()->get_value_by_type_description<char>(*maybe_type_description) =
+                static_cast<char>(new_value.as_i32());
+            break;
+        case FIELD_CLASSPTR:
+        {
+            CBaseEntity* entity{};
+
+            if (new_value.is_object() && is<Entity>(new_value.as_object()))
+                entity = static_cast<Entity&>(new_value.as_object()).entity();
+            else if (!new_value.is_null())
+                return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAnObjectOrNull, new_value);
+
+            *this_entity->entity()->get_value_by_type_description<CBaseEntity*>(*maybe_type_description) = entity;
+            break;
+        }
+        case FIELD_EHANDLE:
+        {
+            auto value = this_entity->entity()->get_value_by_type_description<CBaseHandle>(*maybe_type_description);
+            if (new_value.is_null())
+                value->Term();
+            else if (new_value.is_object() && is<Entity>(new_value.as_object()))
+                *value =
+                    const_cast<CBaseHandle&>(static_cast<Entity&>(new_value.as_object()).entity()->GetRefEHandle());
+            else
+                return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAnObjectOrNull, new_value);
+
+            break;
+        }
+        case FIELD_EDICT:
+        {
+            edict_t* edict{};
+
+            if (new_value.is_object() && is<Entity>(new_value.as_object()))
+                edict = static_cast<Entity&>(new_value.as_object()).entity()->GetNetworkable()->GetEdict();
+            else if (!new_value.is_null())
+                return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAnObjectOrNull, new_value);
+
+            *this_entity->entity()->get_value_by_type_description<edict_t*>(*maybe_type_description) = edict;
+            break;
+        }
+        default:
+            return vm.throw_completion<JS::InternalError>(global_object,
+                                                          "Unable to represent data field type in script");
+    }
+
+    return JS::js_undefined();
+}
+
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::set_send_property_value)
+{
+    auto* this_entity = TRY(typed_this_object(global_object));
+
+    auto property_name = vm.argument(0);
+    if (!property_name.is_string())
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAString, property_name);
+
+    auto maybe_send_property = find_send_property_from_send_table_including_base(
+        *this_entity->entity()->GetServerClass()->m_pTable, property_name.as_string().string());
+
+    if (!maybe_send_property.has_value())
+        return vm.throw_completion<JS::Error>(global_object,
+                                              String::formatted("Unable to find send property {}", property_name));
+
+    auto new_value = vm.argument(1);
+
+    switch (maybe_send_property->GetType())
+    {
+        case DPT_Int:
+        {
+            // Bools are represented as ints, so let's convert so the exposed API is nicer
+            int new_integer_value;
+            if (new_value.is_number())
+                new_integer_value = new_value.as_i32();
+            else if (new_value.is_boolean())
+                new_integer_value = new_value.as_bool() ? 1 : 0;
+            else if (new_value.is_object() && is<Entity>(new_value.as_object()))
+                new_integer_value = static_cast<Entity&>(new_value.as_object()).entity()->GetRefEHandle().ToInt();
+            else
+                return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::IsNotA, new_value, "number");
+
+            *this_entity->entity()->get_value_by_send_property<int>(*maybe_send_property) = new_integer_value;
+            break;
+        }
+        case DPT_Float:
+            if (!new_value.is_number())
+                return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::IsNotA, new_value, "number");
+
+            *this_entity->entity()->get_value_by_send_property<float>(*maybe_send_property) =
+                static_cast<float>(new_value.as_double());
+            break;
+        case DPT_Vector:
+        {
+            auto vector = TRY(to_source_vector(vm, global_object, new_value));
+
+            *this_entity->entity()->get_value_by_send_property<SourceVector>(*maybe_send_property) = vector;
+            break;
+        }
+        default:
+            return vm.throw_completion<JS::InternalError>(global_object,
+                                                          "Unable to represent send property type in script");
+    }
 
     return JS::js_undefined();
 }

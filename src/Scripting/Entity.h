@@ -21,6 +21,8 @@ public:
 
     bool is_valid();
 
+    const CBaseHandle& handle() const { return m_handle; }
+
     // clang-format off
     template<typename T = CBaseEntity>
     T* entity() requires(IsBaseOf<CBaseEntity, T>)

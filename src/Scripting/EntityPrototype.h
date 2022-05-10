@@ -33,5 +33,9 @@ private:
     JS_DECLARE_NATIVE_FUNCTION(teleport);
     JS_DECLARE_NATIVE_FUNCTION(remove);
     JS_DECLARE_NATIVE_FUNCTION(emit_sound);
+    JS_DECLARE_NATIVE_FUNCTION(get_data_field_value);
+    JS_DECLARE_NATIVE_FUNCTION(get_send_property_value);
+    JS_DECLARE_NATIVE_FUNCTION(set_data_field_value);
+    JS_DECLARE_NATIVE_FUNCTION(set_send_property_value);
 };
 }
