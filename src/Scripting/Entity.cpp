@@ -22,10 +22,7 @@ Entity* Entity::create(GlobalObject& global_object, CBaseEntity* entity)
     return global_object.heap().allocate<Entity>(global_object, global_object.entity_prototype(), entity);
 }
 
-bool Entity::is_valid()
-{
-    return entity();
-}
+bool Entity::is_valid() { return entity(); }
 
 void Entity::initialize(JS::GlobalObject& global_object) { Object::initialize(global_object); }
 }
