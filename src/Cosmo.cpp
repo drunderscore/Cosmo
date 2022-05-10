@@ -1,5 +1,6 @@
 #include "Cosmo.h"
 #include "RecipientFilter.h"
+#include "Types/BaseEntity.h"
 #include "Types/GameEvent.h"
 
 #include "RemoveSourceSpecifics.h"
@@ -415,4 +416,16 @@ CON_COMMAND(cosmo_run, "Run a script")
         }
     }
 }
+}
+
+IHandleEntity* CBaseHandle::Get() const
+{
+    if (!IsValid())
+        return nullptr;
+
+    auto* maybe_entity = Cosmo::Plugin::the().server_tools().GetBaseEntityByEntIndex(GetEntryIndex());
+    if (maybe_entity && maybe_entity->GetRefEHandle().GetSerialNumber() == GetSerialNumber())
+        return maybe_entity;
+
+    return nullptr;
 }
