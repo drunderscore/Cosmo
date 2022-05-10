@@ -1,5 +1,6 @@
 #include "Cosmo.h"
 #include "RecipientFilter.h"
+#include "Types/GameEvent.h"
 
 #include "RemoveSourceSpecifics.h"
 
@@ -14,6 +15,8 @@ namespace Cosmo
 SH_DECL_HOOK5(IServerGameClients, ClientConnect, SH_NOATTRIB, 0, bool, edict_t*, const char*, const char*, char*, int);
 SH_DECL_HOOK2_void(IServerGameClients, ClientActive, SH_NOATTRIB, 0, edict_t*, bool);
 SH_DECL_HOOK1_void(IServerGameClients, ClientDisconnect, SH_NOATTRIB, 0, edict_t*);
+// Instead of adding a listener event for every event, we just hook the FireEvent to get them all
+SH_DECL_HOOK2(IGameEventManager2, FireEvent, SH_NOATTRIB, 0, bool, IGameEvent*, bool);
 
 Plugin Plugin::s_the;
 SpewOutputFunc_t Plugin::s_original_spew_output_func{};
@@ -116,12 +119,15 @@ bool Plugin::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool l
     GET_V_IFACE_CURRENT(GetServerFactory, m_server_game_ents, IServerGameEnts, INTERFACEVERSION_SERVERGAMEENTS);
     GET_V_IFACE_ANY(GetServerFactory, m_server_game_clients, IServerGameClients, INTERFACEVERSION_SERVERGAMECLIENTS);
     GET_V_IFACE_CURRENT(GetEngineFactory, m_engine_sound, IEngineSound, IENGINESOUND_SERVER_INTERFACE_VERSION);
+    GET_V_IFACE_CURRENT(GetEngineFactory, m_game_event_manager, IGameEventManager2,
+                        INTERFACEVERSION_GAMEEVENTSMANAGER2);
 
     SH_ADD_HOOK_MEMFUNC(IServerGameClients, ClientConnect, m_server_game_clients, this, &Plugin::on_client_connect,
                         false);
     SH_ADD_HOOK_MEMFUNC(IServerGameClients, ClientActive, m_server_game_clients, this, &Plugin::on_client_active, true);
     SH_ADD_HOOK_MEMFUNC(IServerGameClients, ClientDisconnect, m_server_game_clients, this,
                         &Plugin::on_client_disconnect, false);
+    SH_ADD_HOOK_MEMFUNC(IGameEventManager2, FireEvent, m_game_event_manager, this, &Plugin::on_fire_event, false);
 
 #if SOURCE_ENGINE >= SE_ORANGEBOX
     g_pCVar = m_cvar;
@@ -179,6 +185,7 @@ bool Plugin::Unload(char* error, size_t maxlen)
                            true);
     SH_REMOVE_HOOK_MEMFUNC(IServerGameClients, ClientDisconnect, m_server_game_clients, this,
                            &Plugin::on_client_disconnect, false);
+    SH_REMOVE_HOOK_MEMFUNC(IGameEventManager2, FireEvent, m_game_event_manager, this, &Plugin::on_fire_event, false);
 
     if (subhook_is_installed(s_create_entity_by_name_subhook))
         subhook_remove(s_create_entity_by_name_subhook);
@@ -311,6 +318,45 @@ void Plugin::on_client_disconnect(edict_t* player_edict)
     global_object().game_object().dispatch_event(
         Scripting::EventNames::player_disconnect,
         Scripting::Entity::create(global_object(), m_server_game_ents->EdictToBaseEntity(player_edict)));
+}
+
+bool Plugin::on_fire_event(IGameEvent* event, bool dont_broadcast)
+{
+    auto* game_event = static_cast<CGameEvent*>(event);
+    auto* event_object = m_vm->heap().allocate<JS::Object>(m_global_object, *m_global_object.object_prototype());
+
+    FOR_EACH_SUBKEY(game_event->descriptor().keys, key)
+    {
+        auto* name = key->GetName();
+
+        switch (static_cast<CGameEventDescriptor::Type>(key->GetInt()))
+        {
+            case CGameEventDescriptor::Type::String:
+                MUST(event_object->set(name, JS::js_string(*m_vm, event->GetString(name)),
+                                       JS::Object::ShouldThrowExceptions::No));
+                break;
+            case CGameEventDescriptor::Type::Float:
+                MUST(event_object->set(name, JS::Value(static_cast<double>(event->GetFloat(name))),
+                                       JS::Object::ShouldThrowExceptions::No));
+                break;
+            case CGameEventDescriptor::Type::Long:
+            case CGameEventDescriptor::Type::Short:
+            case CGameEventDescriptor::Type::Byte:
+                MUST(event_object->set(name, JS::Value(event->GetInt(name)), JS::Object::ShouldThrowExceptions::No));
+                break;
+            case CGameEventDescriptor::Type::Bool:
+                MUST(event_object->set(name, JS::Value(event->GetBool(name)), JS::Object::ShouldThrowExceptions::No));
+                break;
+            default:
+                break;
+        }
+    }
+
+    global_object().game_object().dispatch_event(Scripting::EventNames::game_event,
+                                                 JS::js_string(vm(), event->GetName()), event_object,
+                                                 JS::Value(dont_broadcast));
+
+    return true;
 }
 
 CON_COMMAND(cosmo_run, "Run a script")

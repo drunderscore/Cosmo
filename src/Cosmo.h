@@ -4,6 +4,7 @@
 #include "Types/IEngineSound.h"
 #include <ISmmPlugin.h>
 #include <eiface.h>
+#include <igameevents.h>
 #include <toolframework/itoolentity.h>
 
 #include "RemoveSourceSpecifics.h"
@@ -66,6 +67,7 @@ public:
     IServerGameEnts& server_game_ents() const { return *m_server_game_ents; }
     IServerGameClients& server_game_clients() const { return *m_server_game_clients; }
     IEngineSound& engine_sound() const { return *m_engine_sound; }
+    IGameEventManager2& game_event_manager() const { return *m_game_event_manager; }
 
     static Plugin& the() { return s_the; }
     static Plugin s_the;
@@ -98,6 +100,8 @@ private:
 
     void on_client_disconnect(edict_t*);
 
+    bool on_fire_event(IGameEvent*, bool dont_broadcast);
+
     ICvar* m_cvar{};
     IServerGameDLL* m_server_game_dll{};
     IVEngineServer* m_engine_server{};
@@ -105,6 +109,7 @@ private:
     IServerGameEnts* m_server_game_ents{};
     IServerGameClients* m_server_game_clients{};
     IEngineSound* m_engine_sound{};
+    IGameEventManager2* m_game_event_manager;
 
     NonnullRefPtr<JS::VM> m_vm;
     NonnullOwnPtr<JS::Interpreter> m_interpreter;
