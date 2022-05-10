@@ -16,6 +16,7 @@ public:
 
     EntityPrototype& entity_prototype() { return *m_entity_prototype; }
     TeamRoundTimerPrototype& team_round_timer_prototype() { return *m_team_round_timer_prototype; }
+    PlayerPrototype& player_prototype() { return *m_player_prototype; }
     Game& game_object() { return *m_game_object; }
 
 protected:
@@ -24,6 +25,7 @@ protected:
 private:
     EntityPrototype* m_entity_prototype{};
     TeamRoundTimerPrototype* m_team_round_timer_prototype{};
+    PlayerPrototype* m_player_prototype{};
     Game* m_game_object{};
 };
 }

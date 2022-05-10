@@ -3,6 +3,7 @@
 #include "EntityPrototype.h"
 #include "Game.h"
 #include "GlobalObject.h"
+#include "PlayerPrototype.h"
 
 namespace Cosmo::Scripting
 {
@@ -12,6 +13,7 @@ void GlobalObject::initialize_global_object()
 
     m_entity_prototype = heap().allocate<EntityPrototype>(*this, *this);
     m_team_round_timer_prototype = heap().allocate<TeamRoundTimerPrototype>(*this, *this);
+    m_player_prototype = heap().allocate<PlayerPrototype>(*this, *this);
 
     define_direct_property("Game", m_game_object = heap().allocate<Game>(*this, *this), 0);
 }

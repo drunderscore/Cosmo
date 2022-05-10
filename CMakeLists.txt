@@ -40,6 +40,7 @@ add_library(Cosmo SHARED
         src/Scripting/Game.cpp
         src/Scripting/GlobalObject.cpp
         src/Scripting/Helpers.cpp
+        src/Scripting/PlayerPrototype.cpp
         src/Scripting/Server.cpp
         src/Scripting/TeamRoundTimerPrototype.cpp
         src/Signature.cpp

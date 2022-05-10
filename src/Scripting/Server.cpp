@@ -1,4 +1,6 @@
 #include "../Cosmo.h"
+#include <iclient.h>
+#include <iserver.h>
 
 #include "../RemoveSourceSpecifics.h"
 
@@ -23,6 +25,7 @@ void Server::initialize(JS::GlobalObject& global_object)
     define_native_function("getEntityByIndex", get_entity_by_index, 1, 0);
     define_native_function("emitSound", emit_sound, 2, 0);
     define_native_function("sayText2", say_text_2, 8, 0);
+    define_native_function("getPlayerByUserId", get_player_by_userid, 1, 0);
 }
 
 JS_DEFINE_NATIVE_FUNCTION(Server::map_getter) { return JS::js_string(vm, g_SMAPI->GetCGlobals()->mapname.ToCStr()); }
@@ -139,6 +142,28 @@ JS_DEFINE_NATIVE_FUNCTION(Server::say_text_2)
     Plugin::the().say_text_2(filter, source_entity_index.is_number() ? source_entity_index.as_i32() : 0,
                              should_print_to_console.is_boolean() ? should_print_to_console.as_bool() : true,
                              message.as_string().string(), param_1, param_2, param_3, param_4);
+
+    return JS::js_undefined();
+}
+
+JS_DEFINE_NATIVE_FUNCTION(Server::get_player_by_userid)
+{
+    auto user_id = vm.argument(0);
+    if (!user_id.is_number())
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::IsNotA, user_id, "number");
+
+    // No nice way to do this -- must iterate all players. This is how the Engine does it too.
+    for (auto i = 0; i < Plugin::the().engine_server().GetIServer()->GetClientCount(); i++)
+    {
+        auto* client = Plugin::the().engine_server().GetIServer()->GetClient(i);
+        if (!client->IsConnected())
+            continue;
+
+        if (client->GetUserID() == user_id.as_i32())
+            return Entity::create(verify_cast<GlobalObject>(global_object),
+                                  Plugin::the().server_game_ents().EdictToBaseEntity(
+                                      Plugin::the().engine_server().PEntityOfEntIndex(i + 1)));
+    }
 
     return JS::js_undefined();
 }

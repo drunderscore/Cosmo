@@ -23,5 +23,6 @@ private:
     JS_DECLARE_NATIVE_FUNCTION(get_entity_by_index);
     JS_DECLARE_NATIVE_FUNCTION(emit_sound);
     JS_DECLARE_NATIVE_FUNCTION(say_text_2);
+    JS_DECLARE_NATIVE_FUNCTION(get_player_by_userid);
 };
 }
