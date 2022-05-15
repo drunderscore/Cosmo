@@ -137,10 +137,13 @@ JS_DEFINE_NATIVE_FUNCTION(Server::say_text_2)
     auto param_3 = get_say_text_parameter(4);
     auto param_4 = get_say_text_parameter(5);
 
-    auto source_entity_index = vm.argument(6);
+    int source_entity_index;
+    if (auto source_entity = vm.argument(6); source_entity.is_object() && is<Entity>(source_entity.as_object()))
+        source_entity_index = static_cast<Entity&>(source_entity.as_object()).entity()->GetRefEHandle().GetEntryIndex();
+
     auto should_print_to_console = vm.argument(7);
 
-    Plugin::the().say_text_2(filter, source_entity_index.is_number() ? source_entity_index.as_i32() : 0,
+    Plugin::the().say_text_2(filter, source_entity_index,
                              should_print_to_console.is_boolean() ? should_print_to_console.as_bool() : true,
                              message.as_string().string(), param_1, param_2, param_3, param_4);
 
