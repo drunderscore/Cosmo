@@ -23,6 +23,7 @@ void EntityPrototype::initialize(JS::GlobalObject& global_object)
     define_native_accessor("classname", classname_getter, {}, 0);
     define_native_accessor("position", position_getter, position_setter, 0);
     define_native_accessor("team", team_getter, team_setter, 0);
+    define_native_accessor("flags", flags_getter, flags_setter, 0);
     define_native_accessor("isValid", is_valid, {}, 0);
 
     define_native_function("dispatchSpawn", dispatch_spawn, 0, 0);
@@ -447,6 +448,30 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::set_send_property_value)
             return vm.throw_completion<JS::InternalError>(global_object,
                                                           "Unable to represent send property type in script");
     }
+
+    return JS::js_undefined();
+}
+
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::flags_getter)
+{
+    auto* this_entity = TRY(ensure_this_entity(vm, global_object));
+
+    return *this_entity->entity()->get_value_by_type_description<int>(
+        *find_type_description_from_datamap_by_name_including_base(*this_entity->entity()->GetDataDescMap(),
+                                                                   "m_fFlags"));
+}
+
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::flags_setter)
+{
+    auto* this_entity = TRY(ensure_this_entity(vm, global_object));
+
+    auto new_flags = vm.argument(0);
+    if (!new_flags.is_number())
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::IsNotA, new_flags, "number");
+
+    *this_entity->entity()->get_value_by_type_description<int>(
+        *find_type_description_from_datamap_by_name_including_base(*this_entity->entity()->GetDataDescMap(),
+                                                                   "m_fFlags")) = new_flags.as_i32();
 
     return JS::js_undefined();
 }
