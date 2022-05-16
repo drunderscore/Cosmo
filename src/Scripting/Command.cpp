@@ -98,6 +98,9 @@ JS_DEFINE_NATIVE_FUNCTION(Command::register_)
     if (!callback_function.is_function())
         return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAFunction, callback_function);
 
+    if (command_object.m_commands.contains(command_name.as_string().string()))
+        return vm.throw_completion<JS::Error>(global_object, "A command with that name has already been registered");
+
     command_object.m_commands.set(
         command_name.as_string().string(),
         {make<ConCommand>(command_name.as_string().string().characters(), on_script_concommand_execute),
