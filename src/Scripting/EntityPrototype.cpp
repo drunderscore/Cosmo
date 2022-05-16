@@ -34,6 +34,7 @@ void EntityPrototype::initialize(JS::GlobalObject& global_object)
     define_native_function("getSendPropertyValue", get_send_property_value, 1, 0);
     define_native_function("setDataFieldValue", set_data_field_value, 2, 0);
     define_native_function("setSendPropertyValue", set_send_property_value, 2, 0);
+    define_native_function("activate", activate, 0, 0);
 }
 
 JS::ThrowCompletionOr<Entity*> EntityPrototype::ensure_this_entity(JS::VM& vm, JS::GlobalObject& global_object)
@@ -471,6 +472,15 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::flags_setter)
     *this_entity->entity()->get_value_by_type_description<int>(
         *find_type_description_from_datamap_by_name_including_base(*this_entity->entity()->GetDataDescMap(),
                                                                    "m_fFlags")) = new_flags.as_i32();
+
+    return JS::js_undefined();
+}
+
+JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::activate)
+{
+    auto* this_entity = TRY(ensure_this_entity(vm, global_object));
+
+    this_entity->entity()->Activate();
 
     return JS::js_undefined();
 }

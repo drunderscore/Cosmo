@@ -86,4 +86,9 @@ public:
         return *get_value_by_type_description<int>(
             *Cosmo::find_type_description_from_datamap_by_name_including_base(*GetDataDescMap(), "m_iTeamNum"));
     }
+
+    inline void Activate()
+    {
+        Cosmo::get_function_from_vtable_index<__attribute__((cdecl)) void (*)(const CBaseEntity*)>(this, 34)(this);
+    }
 };
