@@ -368,8 +368,7 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::set_data_field_value)
             if (new_value.is_null())
                 value->Term();
             else if (new_value.is_object() && is<Entity>(new_value.as_object()))
-                *value =
-                    const_cast<CBaseHandle&>(static_cast<Entity&>(new_value.as_object()).entity()->GetRefEHandle());
+                *value = static_cast<Entity&>(new_value.as_object()).handle();
             else
                 return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAnObjectOrNull, new_value);
 
