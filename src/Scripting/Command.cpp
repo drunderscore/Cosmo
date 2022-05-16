@@ -15,6 +15,7 @@ void Command::initialize(JS::GlobalObject& global_object)
     Object::initialize(global_object);
 
     define_native_function("register", register_, 2, 0);
+    define_native_function("unregister", unregister, 1, 0);
     define_native_function("execute", execute, 1, 0);
 }
 
@@ -107,6 +108,30 @@ JS_DEFINE_NATIVE_FUNCTION(Command::register_)
          &callback_function.as_function()});
 
     return JS::js_undefined();
+}
+
+JS_DEFINE_NATIVE_FUNCTION(Command::unregister)
+{
+    auto this_value = vm.this_value(global_object);
+    if (!this_value.is_object() || !is<Command>(this_value.as_object()))
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAnObjectOfType, "Command");
+
+    auto& command_object = static_cast<Command&>(this_value.as_object());
+
+    auto command_name = vm.argument(0);
+    if (!command_name.is_string())
+        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAString, command_name);
+
+    auto command_iterator = command_object.m_commands.find(command_name.as_string().string());
+
+    if (command_iterator != command_object.m_commands.end())
+    {
+        g_SMAPI->UnregisterConCommandBase(g_PLAPI, command_iterator->value.command);
+        command_object.m_commands.remove(command_iterator);
+        return true;
+    }
+
+    return false;
 }
 
 JS_DEFINE_NATIVE_FUNCTION(Command::execute)

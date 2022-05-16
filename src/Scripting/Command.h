@@ -35,6 +35,7 @@ private:
 
     // "register" is a C keyword... pretty unfortunate
     JS_DECLARE_NATIVE_FUNCTION(register_);
+    JS_DECLARE_NATIVE_FUNCTION(unregister);
     JS_DECLARE_NATIVE_FUNCTION(execute);
 
     HashMap<String, ConCommandWithCallbackFunction, CaseInsensitiveStringTraits> m_commands;
