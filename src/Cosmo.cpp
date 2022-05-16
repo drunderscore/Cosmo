@@ -97,20 +97,16 @@ bool Plugin::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool l
     if (!create_entity_by_name_address.has_value())
     {
         if (error && maxlen)
-        {
             strncpy(error, "Could not find signature for CreateEntityByName", maxlen);
-            return false;
-        }
+        return false;
     }
 
     auto dispatch_spawn_address = s_dispatch_spawn_function.find_in_library(s_server_library_name.characters());
     if (!dispatch_spawn_address.has_value())
     {
         if (error && maxlen)
-        {
             strncpy(error, "Could not find signature for DispatchSpawn", maxlen);
-            return false;
-        }
+        return false;
     }
 
     GET_V_IFACE_CURRENT(GetEngineFactory, m_cvar, ICvar, CVAR_INTERFACE_VERSION);
