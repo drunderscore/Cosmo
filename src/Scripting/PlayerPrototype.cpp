@@ -24,8 +24,7 @@ JS_DEFINE_NATIVE_FUNCTION(PlayerPrototype::name_getter)
 {
     auto* this_entity = TRY(EntityPrototype::ensure_this_entity(vm, global_object));
 
-    auto* client = Plugin::the().engine_server().GetIServer()->GetClient(
-        this_entity->entity()->GetRefEHandle().GetEntryIndex() - 1);
+    auto* client = Plugin::the().engine_server().GetIServer()->GetClient(this_entity->handle().GetEntryIndex() - 1);
 
     if (!client || !client->IsConnected())
         return vm.throw_completion<JS::InternalError>(global_object, "Failed to get client");
@@ -41,8 +40,7 @@ JS_DEFINE_NATIVE_FUNCTION(PlayerPrototype::name_setter)
     if (!name.is_string())
         return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAString, name);
 
-    auto* client = Plugin::the().engine_server().GetIServer()->GetClient(
-        this_entity->entity()->GetRefEHandle().GetEntryIndex() - 1);
+    auto* client = Plugin::the().engine_server().GetIServer()->GetClient(this_entity->handle().GetEntryIndex() - 1);
 
     if (!client || !client->IsConnected())
         return vm.throw_completion<JS::InternalError>(global_object, "Failed to get client");
@@ -59,8 +57,7 @@ JS_DEFINE_NATIVE_FUNCTION(PlayerPrototype::userid_getter)
 {
     auto* this_entity = TRY(EntityPrototype::ensure_this_entity(vm, global_object));
 
-    auto* client = Plugin::the().engine_server().GetIServer()->GetClient(
-        this_entity->entity()->GetRefEHandle().GetEntryIndex() - 1);
+    auto* client = Plugin::the().engine_server().GetIServer()->GetClient(this_entity->handle().GetEntryIndex() - 1);
 
     if (!client || !client->IsConnected())
         return vm.throw_completion<JS::InternalError>(global_object, "Failed to get client");
@@ -74,8 +71,7 @@ JS_DEFINE_NATIVE_FUNCTION(PlayerPrototype::disconnect)
 
     auto reason = vm.argument(0);
 
-    auto* client = Plugin::the().engine_server().GetIServer()->GetClient(
-        this_entity->entity()->GetRefEHandle().GetEntryIndex() - 1);
+    auto* client = Plugin::the().engine_server().GetIServer()->GetClient(this_entity->handle().GetEntryIndex() - 1);
 
     if (!client || !client->IsConnected())
         return vm.throw_completion<JS::InternalError>(global_object, "Failed to get client");

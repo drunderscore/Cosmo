@@ -74,7 +74,7 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::index_getter)
 {
     auto* this_entity = TRY(ensure_this_entity(vm, global_object));
 
-    return this_entity->entity()->GetRefEHandle().GetEntryIndex();
+    return this_entity->handle().GetEntryIndex();
 }
 
 JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::is_player)
@@ -423,7 +423,7 @@ JS_DEFINE_NATIVE_FUNCTION(EntityPrototype::set_send_property_value)
             else if (new_value.is_boolean())
                 new_integer_value = new_value.as_bool() ? 1 : 0;
             else if (new_value.is_object() && is<Entity>(new_value.as_object()))
-                new_integer_value = static_cast<Entity&>(new_value.as_object()).entity()->GetRefEHandle().ToInt();
+                new_integer_value = static_cast<Entity&>(new_value.as_object()).handle().ToInt();
             else
                 return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::IsNotA, new_value, "number");
 

@@ -139,7 +139,7 @@ JS_DEFINE_NATIVE_FUNCTION(Server::say_text_2)
 
     int source_entity_index;
     if (auto source_entity = vm.argument(6); source_entity.is_object() && is<Entity>(source_entity.as_object()))
-        source_entity_index = static_cast<Entity&>(source_entity.as_object()).entity()->GetRefEHandle().GetEntryIndex();
+        source_entity_index = static_cast<Entity&>(source_entity.as_object()).handle().GetEntryIndex();
 
     auto should_print_to_console = vm.argument(7);
 
