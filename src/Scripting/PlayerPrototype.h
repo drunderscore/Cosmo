@@ -13,8 +13,8 @@ class PlayerPrototype final : public JS::PrototypeObject<PlayerPrototype, Entity
     JS_PROTOTYPE_OBJECT(PlayerPrototype, Entity, Player);
 
 public:
-    explicit PlayerPrototype(GlobalObject&);
-    virtual void initialize(JS::GlobalObject&) override;
+    explicit PlayerPrototype(JS::Realm&);
+    virtual void initialize(JS::Realm&) override;
     virtual ~PlayerPrototype() override = default;
 
 private:

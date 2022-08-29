@@ -10,8 +10,8 @@ class GlobalObject : public JS::GlobalObject
     JS_OBJECT(ReplObject, JS::GlobalObject);
 
 public:
-    GlobalObject() = default;
-    void initialize_global_object() override;
+    explicit GlobalObject(JS::Realm&);
+    void initialize(JS::Realm&) override;
     ~GlobalObject() override = default;
 
     EntityPrototype& entity_prototype() { return *m_entity_prototype; }

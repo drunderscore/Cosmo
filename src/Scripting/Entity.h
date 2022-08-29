@@ -14,10 +14,10 @@ class Entity : public JS::Object
 public:
     Entity(Object&, CBaseEntity*);
     Entity(Object&, const CBaseHandle&);
-    void initialize(JS::GlobalObject&) override;
+    void initialize(JS::Realm&) override;
     ~Entity() override = default;
 
-    static Entity* create(GlobalObject& global_object, CBaseEntity* entity);
+    static Entity* create(JS::Realm&, CBaseEntity*);
 
     bool is_valid();
 

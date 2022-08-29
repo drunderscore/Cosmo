@@ -10,8 +10,8 @@ class Server final : public JS::Object
     JS_OBJECT(Server, Object);
 
 public:
-    explicit Server(GlobalObject&);
-    void initialize(JS::GlobalObject&) override;
+    explicit Server(JS::Realm&);
+    void initialize(JS::Realm&) override;
     ~Server() override = default;
 
 private:

@@ -3,12 +3,12 @@
 #include <AK/StringView.h>
 
 #define ENUMERATE_COSMO_EVENT_NAMES(M)                                                                                 \
-    M("PlayerConnect", player_connect)                                                                                 \
-    M("PlayerDisconnect", player_disconnect)                                                                           \
-    M("PlayerActive", player_active)                                                                                   \
-    M("EntityCreate", entity_create)                                                                                   \
-    M("EntitySpawn", entity_spawn)                                                                                     \
-    M("GameEvent", game_event)
+    M("PlayerConnect"sv, player_connect)                                                                               \
+    M("PlayerDisconnect"sv, player_disconnect)                                                                         \
+    M("PlayerActive"sv, player_active)                                                                                 \
+    M("EntityCreate"sv, entity_create)                                                                                 \
+    M("EntitySpawn"sv, entity_spawn)                                                                                   \
+    M("GameEvent"sv, game_event)
 
 namespace Cosmo::Scripting
 {

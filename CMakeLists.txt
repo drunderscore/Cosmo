@@ -77,8 +77,8 @@ target_compile_definitions(Cosmo PRIVATE
         SE_CONTAGION=14
         SE_DOI=20
         SE_MOCK=999
-        COSMO_GIT_SHA1="${GIT_SHA1}"
-        COSMO_GIT_SHA1_SHORT="${GIT_SHA1_SHORT}"
+        COSMO_GIT_SHA1="${GIT_SHA1}"sv
+        COSMO_GIT_SHA1_SHORT="${GIT_SHA1_SHORT}"sv
         )
 target_include_directories(Cosmo PRIVATE SYSTEM
         ${PROJECT_SOURCE_DIR}

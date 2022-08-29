@@ -16,8 +16,8 @@ public:
         JS::FunctionObject* callback;
     };
 
-    explicit Command(GlobalObject&);
-    void initialize(JS::GlobalObject&) override;
+    explicit Command(JS::Realm&);
+    void initialize(JS::Realm&) override;
     ~Command() override = default;
 
     JS::ThrowCompletionOr<JS::Value> internal_get(const JS::PropertyKey&, JS::Value receiver) const override;

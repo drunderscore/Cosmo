@@ -43,7 +43,7 @@ Optional<SendProp&> find_send_property_from_send_table_including_base(SendTable&
         return maybe_property;
 
     // Assume a SendTable with a property named "baseclass" is a DPT_DataTable, and has a valid SendTable*
-    if (auto base_send_table = find_send_property_from_send_table(send_table, "baseclass"); base_send_table.has_value())
+    if (auto base_send_table = find_send_property_from_send_table(send_table, "baseclass"sv); base_send_table.has_value())
         return find_send_property_from_send_table_including_base(*base_send_table->GetDataTable(), property_name);
 
     return {};

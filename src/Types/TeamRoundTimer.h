@@ -38,6 +38,6 @@ public:
     inline bool IsTimerPaused()
     {
         return *get_value_by_send_property<bool>(
-            *Cosmo::find_send_property_from_send_table_including_base(*GetServerClass()->m_pTable, "m_bTimerPaused"));
+            *Cosmo::find_send_property_from_send_table_including_base(*GetServerClass()->m_pTable, "m_bTimerPaused"sv));
     }
 };

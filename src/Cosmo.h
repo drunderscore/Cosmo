@@ -25,14 +25,7 @@ class Plugin final : public ISmmPlugin
 {
 public:
     // TODO: Perhaps we should have our own import module hook? Can the default implementation be abused?
-    Plugin()
-        : m_vm(JS::VM::create()), m_interpreter(JS::Interpreter::create<Cosmo::Scripting::GlobalObject>(m_vm)),
-          m_console(m_interpreter->global_object().console()),
-          m_global_object(verify_cast<Scripting::GlobalObject>(m_interpreter->global_object()))
-    {
-        m_global_object.console().set_client(m_console);
-        m_vm->enable_default_host_import_module_dynamically_hook();
-    }
+    Plugin();
 
     bool Load(PluginId, ISmmAPI*, char* error, size_t maxlength, bool late) override;
     bool Unload(char* error, size_t maxlen) override;
@@ -52,8 +45,7 @@ public:
 
     JS::VM& vm() { return *m_vm; }
     JS::Interpreter& interpreter() { return *m_interpreter; }
-
-    Scripting::GlobalObject& global_object() { return m_global_object; }
+    Scripting::GlobalObject& global_object();
 
     // We want String& here, so we can ensure they are null-terminated
     void say_text_2(const RecipientFilter&, int source_entity_index, bool should_print_to_console,
@@ -109,11 +101,10 @@ private:
     IServerGameEnts* m_server_game_ents{};
     IServerGameClients* m_server_game_clients{};
     IEngineSound* m_engine_sound{};
-    IGameEventManager2* m_game_event_manager;
+    IGameEventManager2* m_game_event_manager{};
 
     NonnullRefPtr<JS::VM> m_vm;
     NonnullOwnPtr<JS::Interpreter> m_interpreter;
-    Scripting::GlobalObject& m_global_object;
     Console m_console;
 
     static Signature s_create_entity_by_name_function;

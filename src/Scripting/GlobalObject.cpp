@@ -7,15 +7,17 @@
 
 namespace Cosmo::Scripting
 {
-void GlobalObject::initialize_global_object()
+GlobalObject::GlobalObject(JS::Realm& realm) : JS::GlobalObject(realm) {}
+
+void GlobalObject::initialize(JS::Realm& realm)
 {
-    Base::initialize_global_object();
+    Base::initialize(realm);
 
-    m_entity_prototype = heap().allocate<EntityPrototype>(*this, *this);
-    m_team_round_timer_prototype = heap().allocate<TeamRoundTimerPrototype>(*this, *this);
-    m_player_prototype = heap().allocate<PlayerPrototype>(*this, *this);
+    m_entity_prototype = heap().allocate<EntityPrototype>(realm, realm);
+    m_team_round_timer_prototype = heap().allocate<TeamRoundTimerPrototype>(realm, realm);
+    m_player_prototype = heap().allocate<PlayerPrototype>(realm, realm);
 
-    define_direct_property("Game", m_game_object = heap().allocate<Game>(*this, *this), 0);
+    define_direct_property("Game", m_game_object = heap().allocate<Game>(realm, realm), 0);
 }
 
 void GlobalObject::visit_edges(Visitor& visitor)
@@ -24,5 +26,7 @@ void GlobalObject::visit_edges(Visitor& visitor)
 
     visitor.visit(m_entity_prototype);
     visitor.visit(m_team_round_timer_prototype);
+    visitor.visit(m_player_prototype);
+    visitor.visit(m_game_object);
 }
 }

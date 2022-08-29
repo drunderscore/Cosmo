@@ -14,8 +14,8 @@ class Game final : public JS::Object
     JS_OBJECT(Game, Object);
 
 public:
-    explicit Game(GlobalObject&);
-    void initialize(JS::GlobalObject&) override;
+    explicit Game(JS::Realm&);
+    void initialize(JS::Realm&) override;
     ~Game() override = default;
 
     Command& command_object() { return *m_command_object; }
@@ -30,12 +30,12 @@ public:
         for (auto* callback : *maybe_event_handlers)
         {
             // FIXME: Should the this_value here by myself?
-            auto maybe_return_value = JS::call(global_object(), callback, JS::js_undefined(), args...);
+            auto maybe_return_value = JS::call(vm(), callback, JS::js_undefined(), args...);
             if (maybe_return_value.is_error())
             {
                 Warning("Event handler for event %s threw an exception: %s\n",
                         event_name.characters_without_null_termination(),
-                        MUST(maybe_return_value.throw_completion().value()->to_string(global_object())).characters());
+                        MUST(maybe_return_value.throw_completion().value()->to_string(vm())).characters());
             }
         }
     }

@@ -10,24 +10,21 @@
 
 namespace Cosmo::Scripting
 {
-Game::Game(GlobalObject& global_object) : Object(*global_object.object_prototype()) {}
+Game::Game(JS::Realm& realm) : Object(*realm.intrinsics().object_prototype()) {}
 
-void Game::initialize(JS::GlobalObject& global_object)
+void Game::initialize(JS::Realm& realm)
 {
-    Object::initialize(global_object);
+    Base::initialize(realm);
 
     // FIXME: This is probably better as a direct property (without an accessor), but we construct (and therefore
     //        initialize) this object too soon (in initializer lists), before we get the interfaces we need (and way
     //        before we even Load).
-    define_native_accessor("modDescription", mod_description_getter, {}, 0);
+    define_native_accessor(realm, "modDescription", mod_description_getter, {}, 0);
 
-    auto& cosmo_global_object = verify_cast<GlobalObject>(global_object);
+    define_direct_property("Server", heap().allocate<Server>(realm, realm), 0);
+    define_direct_property("Command", m_command_object = heap().allocate<Command>(realm, realm), 0);
 
-    define_direct_property("Server", heap().allocate<Server>(cosmo_global_object, cosmo_global_object), 0);
-    define_direct_property("Command",
-                           m_command_object = heap().allocate<Command>(cosmo_global_object, cosmo_global_object), 0);
-
-    define_native_function("on", on, 2, 0);
+    define_native_function(realm, "on", on, 2, 0);
 }
 
 JS_DEFINE_NATIVE_FUNCTION(Game::mod_description_getter)
@@ -43,19 +40,19 @@ JS_DEFINE_NATIVE_FUNCTION(Game::mod_description_getter)
 
 JS_DEFINE_NATIVE_FUNCTION(Game::on)
 {
-    auto this_value = vm.this_value(global_object);
+    auto this_value = vm.this_value();
     if (!this_value.is_object() || !is<Game>(this_value.as_object()))
-        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAnObjectOfType, "Game");
+        return vm.throw_completion<JS::TypeError>(JS::ErrorType::NotAnObjectOfType, "Game");
 
     auto& game_object = static_cast<Game&>(this_value.as_object());
 
     auto event_name = vm.argument(0);
     if (!event_name.is_string())
-        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAString, event_name);
+        return vm.throw_completion<JS::TypeError>(JS::ErrorType::NotAString, event_name);
 
     auto event_callback = vm.argument(1);
     if (!event_callback.is_function())
-        return vm.throw_completion<JS::TypeError>(global_object, JS::ErrorType::NotAFunction, event_callback);
+        return vm.throw_completion<JS::TypeError>(JS::ErrorType::NotAFunction, event_callback);
 
     game_object.m_event_handlers
         .ensure(event_name.as_string().string(), [&vm]() { return JS::MarkedVector<JS::FunctionObject*>(vm.heap()); })

@@ -29,7 +29,7 @@ void find_and_add_children(HashMap<String, SendTable*>& send_tables, SendTable* 
 CON_COMMAND(cosmo_dump, "Dump server classes and data tables to dump.json")
 {
     // Let's try to open the file first, so we can avoid doing useless work if we can't even output it.
-    auto maybe_output_file = Core::Stream::File::open("dump.json", Core::Stream::OpenMode::Write);
+    auto maybe_output_file = Core::Stream::File::open("dump.json"sv, Core::Stream::OpenMode::Write);
     if (maybe_output_file.is_error())
     {
         Warning("Failed to open dump.json for writing\n");

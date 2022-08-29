@@ -10,6 +10,7 @@
 #include "Scripting/EventNames.h"
 #include "Scripting/Game.h"
 #include <LibCore/Stream.h>
+#include <LibJS/Runtime/ConsoleObject.h>
 
 namespace Cosmo
 {
@@ -32,11 +33,12 @@ static Array<Optional<Color>, SPEW_TYPE_COUNT> s_default_spew_colors = {
 
 typedef CBaseEntity* (*CreateEntityByNameFn)(const char* classname, int forced_edict_index);
 Signature Plugin::s_create_entity_by_name_function(
-    "55 89 E5 56 53 83 EC 10 8B 5D 0C 8B 75 08 83 FB FF 74 1A A1 ? ? ? ? 8B 10");
+    "55 89 E5 56 53 83 EC 10 8B 5D 0C 8B 75 08 83 FB FF 74 1A A1 ? ? ? ? 8B 10"sv);
 subhook_t Plugin::s_create_entity_by_name_subhook;
 
 typedef int (*DispatchSpawnFn)(CBaseEntity*);
-Signature Plugin::s_dispatch_spawn_function("55 89 E5 57 56 53 83 EC 2C 8B 5D 08 85 DB 0F ? ? ? ? ? A1 ? ? ? ? 89 C1");
+Signature Plugin::s_dispatch_spawn_function(
+    "55 89 E5 57 56 53 83 EC 2C 8B 5D 08 85 DB 0F ? ? ? ? ? A1 ? ? ? ? 89 C1"sv);
 subhook_t Plugin::s_dispatch_spawn_subhook;
 
 // No StringView, ensure it's null-terminated
@@ -59,7 +61,7 @@ JS::ThrowCompletionOr<JS::Value> Plugin::Console::printer(JS::Console::LogLevel 
 {
     if (auto* values = printer_arguments.get_pointer<JS::MarkedVector<JS::Value>>())
     {
-        auto output = String::join(" ", *values);
+        auto output = String::join(' ', *values);
 
         switch (log_level)
         {
@@ -86,6 +88,14 @@ JS::ThrowCompletionOr<JS::Value> Plugin::Console::printer(JS::Console::LogLevel 
         }
     }
     return JS::js_undefined();
+}
+
+Plugin::Plugin()
+    : m_vm(JS::VM::create()), m_interpreter(JS::Interpreter::create<Cosmo::Scripting::GlobalObject>(m_vm)),
+      m_console(m_interpreter->realm().intrinsics().console_object()->console())
+{
+    m_interpreter->realm().intrinsics().console_object()->console().set_client(m_console);
+    m_vm->enable_default_host_import_module_dynamically_hook();
 }
 
 bool Plugin::Load(PluginId id, ISmmAPI* ismm, char* error, size_t maxlen, bool late)
@@ -169,7 +179,7 @@ bool Plugin::Unload(char* error, size_t maxlen)
         s_original_spew_output_func = nullptr;
     }
 
-    auto& command_object = m_global_object.game_object().command_object();
+    auto& command_object = global_object().game_object().command_object();
 
     for (auto& kv : command_object.commands())
         g_SMAPI->UnregisterConCommandBase(g_PLAPI, kv.value.command);
@@ -241,24 +251,29 @@ SpewRetval_t Plugin::ansi_true_color_spew_output(SpewType_t spew_type, const tch
     // instead, let's replace the newline with our reset, and then re-add the newline.
 
     // All this string copying is pretty unfortunate :(
-    StringView msg_view(msg);
+    StringView msg_view(msg, strlen(msg));
     StringBuilder corrected_message_builder;
-    corrected_message_builder.appendff("\u001b[38;2;{};{};{}m", output_color.r(), output_color.g(), output_color.b());
+    corrected_message_builder.appendff("\u001b[38;2;{};{};{}m"sv, output_color.r(), output_color.g(), output_color.b());
 
     // This will be 99% of spew, so try to put the ANSI color reset BEFORE the newline
     if (msg_view.ends_with('\n'))
     {
         corrected_message_builder.append(msg_view.substring_view(0, msg_view.length() - 1));
-        corrected_message_builder.append("\u001B[0m");
+        corrected_message_builder.append("\u001B[0m"sv);
         corrected_message_builder.append('\n');
     }
     else
     {
         corrected_message_builder.appendff(msg_view);
-        corrected_message_builder.append("\u001B[0m");
+        corrected_message_builder.append("\u001B[0m"sv);
     }
 
     return s_original_spew_output_func(spew_type, corrected_message_builder.to_string().characters());
+}
+
+Scripting::GlobalObject& Plugin::global_object()
+{
+    return verify_cast<Scripting::GlobalObject>(vm().get_global_object());
 }
 
 CBaseEntity* Plugin::create_entity_by_name_hook(const char* classname, int forced_edict_index)
@@ -269,8 +284,9 @@ CBaseEntity* Plugin::create_entity_by_name_hook(const char* classname, int force
     {
         auto& global_object = Plugin::the().global_object();
 
-        global_object.game_object().dispatch_event(Scripting::EventNames::entity_create,
-                                                   Scripting::Entity::create(global_object, entity));
+        global_object.game_object().dispatch_event(
+            Scripting::EventNames::entity_create,
+            Scripting::Entity::create(Plugin::the().interpreter().realm(), entity));
     }
 
     return entity;
@@ -283,8 +299,9 @@ int Plugin::dispatch_spawn_hook(CBaseEntity* entity)
     {
         auto& global_object = Plugin::the().global_object();
 
-        global_object.game_object().dispatch_event(Scripting::EventNames::entity_spawn,
-                                                   Scripting::Entity::create(global_object, entity));
+        global_object.game_object().dispatch_event(
+            Scripting::EventNames::entity_spawn,
+            Scripting::Entity::create(Plugin::the().interpreter().realm(), entity));
     }
 
     return success;
@@ -307,20 +324,21 @@ void Plugin::on_client_active(edict_t* player_edict, bool)
 {
     global_object().game_object().dispatch_event(
         Scripting::EventNames::player_active,
-        Scripting::Entity::create(global_object(), m_server_game_ents->EdictToBaseEntity(player_edict)));
+        Scripting::Entity::create(interpreter().realm(), m_server_game_ents->EdictToBaseEntity(player_edict)));
 }
 
 void Plugin::on_client_disconnect(edict_t* player_edict)
 {
     global_object().game_object().dispatch_event(
         Scripting::EventNames::player_disconnect,
-        Scripting::Entity::create(global_object(), m_server_game_ents->EdictToBaseEntity(player_edict)));
+        Scripting::Entity::create(interpreter().realm(), m_server_game_ents->EdictToBaseEntity(player_edict)));
 }
 
 bool Plugin::on_fire_event(IGameEvent* event, bool dont_broadcast)
 {
     auto* game_event = static_cast<CGameEvent*>(event);
-    auto* event_object = m_vm->heap().allocate<JS::Object>(m_global_object, *m_global_object.object_prototype());
+    auto* event_object = m_vm->heap().allocate<JS::Object>(interpreter().realm(),
+                                                           *interpreter().realm().intrinsics().object_prototype());
 
     FOR_EACH_SUBKEY(game_event->descriptor().keys, key)
     {
@@ -361,8 +379,10 @@ CON_COMMAND(cosmo_run, "Run a script")
     if (args.ArgC() < 2)
         return;
 
+    StringView script_path(args.Arg(1), strlen(args.Arg(1)));
+
     // FIXME: It would be nice if we could print all the Errors here. There's a formatter for it, not too hard.
-    auto maybe_file_stream = Core::Stream::File::open(args.Arg(1), Core::Stream::OpenMode::Read);
+    auto maybe_file_stream = Core::Stream::File::open(script_path, Core::Stream::OpenMode::Read);
     if (maybe_file_stream.is_error())
     {
         Warning("Unable to open script %s\n", args.Arg(1));
@@ -407,8 +427,7 @@ CON_COMMAND(cosmo_run, "Run a script")
         {
             VERIFY(maybe_return_value.throw_completion().value().has_value());
             Warning("Script execution threw an exception: %s\n",
-                    MUST(maybe_return_value.throw_completion().value()->to_string(Plugin::the().global_object()))
-                        .characters());
+                    MUST(maybe_return_value.throw_completion().value()->to_string(Plugin::the().vm())).characters());
         }
     }
 }

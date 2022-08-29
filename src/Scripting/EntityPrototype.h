@@ -10,11 +10,11 @@ class EntityPrototype final : public JS::PrototypeObject<EntityPrototype, Entity
     JS_PROTOTYPE_OBJECT(EntityPrototype, Entity, Entity);
 
 public:
-    explicit EntityPrototype(JS::GlobalObject&);
-    virtual void initialize(JS::GlobalObject&) override;
+    explicit EntityPrototype(JS::Realm&);
+    virtual void initialize(JS::Realm&) override;
     virtual ~EntityPrototype() override = default;
 
-    static JS::ThrowCompletionOr<Entity*> ensure_this_entity(JS::VM& vm, JS::GlobalObject& global_object);
+    static JS::ThrowCompletionOr<Entity*> ensure_this_entity(JS::VM& vm);
 
 private:
     JS_DECLARE_NATIVE_FUNCTION(model_getter);
